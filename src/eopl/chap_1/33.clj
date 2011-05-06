@@ -7,16 +7,15 @@
   (:use clojure.test)
   (:use eopl.chap-1.31))
 
-(defn mark-leaves-with-red-depth [bintree]
-  (mark-leaves-with-depth bintree 0))
-
-(defn mark-leaves-with-depth [bintree count]
-  (if (leaf? bintree)
-    (leaf count)
-    (let [count (if (= 'red (content-of bintree)) (inc count) count)]
-      (interior-node (content-of bintree)
-                     (mark-leaves-with-depth (lson bintree) count)
-                     (mark-leaves-with-depth (rson bintree) count)))))
+(defn mark-leaves-with-red-depth
+  ([bintree] (mark-leaves-with-red-depth bintree 0))
+  ([bintree count]
+     (if (leaf? bintree)
+       (leaf count)
+       (let [count (if (= 'red (content-of bintree)) (inc count) count)]
+         (interior-node (content-of bintree)
+                        (mark-leaves-with-red-depth (lson bintree) count)
+                        (mark-leaves-with-red-depth (rson bintree) count))))))
 
 (deftest mark-leaves-with-red-depth-test
   (is (= '(red
