@@ -39,7 +39,7 @@
 
 (defn apply-env [env search-var]
   (if (empty-env? env)
-    (throw (IllegalAccessError. (str "var " search-var " not found in env")))
+    (throw (IllegalAccessException. (str "var " search-var " not found in env")))
     (let [pair (first env)
           r (find (zipmap (first pair)
                           (second pair))
@@ -53,7 +53,6 @@
     (is (= (apply-env env 'y) "y"))
     (is (= (apply-env env 'x) "x"))
     (is (= (apply-env (extend-env* env '(a b) '(1 2)) 'a) 1))
-    ;(is (thrown? IllegalAccessException (apply-env env 'z)))
-    ))
+    (is (thrown? IllegalAccessException (apply-env env 'z)))))
 
 (run-tests)

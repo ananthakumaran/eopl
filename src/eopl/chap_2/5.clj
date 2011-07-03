@@ -20,7 +20,7 @@
       (if (= var search-var)
         val
         (recur (rest env) search-var)))
-    (throw (IllegalAccessError. (str "var " search-var " not found in env")))))
+    (throw (IllegalAccessException. (str "var " search-var " not found in env")))))
 
 
 (deftest env-test

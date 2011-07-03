@@ -5,9 +5,9 @@
 ;; ones you define.
 
 (ns eopl.chap-2.23
-  (:use clojure.test))
+  (:use clojure.test)
+  (:use eopl.core.define-datatype))
 
-;; TODO test
 (defn identifier? [x]
   (and (symbol? x) (not= 'lambda x)))
 
@@ -20,3 +20,24 @@
   (app-exp
    (rator lc-exp?)
    (rand lc-exp?)))
+
+(defn occurs-free? [search-var exp]
+  (cases lc-exp exp
+         (var-exp (var) (= var search-var))
+         (lambda-exp (bound-var body)
+                     (and (not (= search-var bound-var))
+                          (occurs-free? search-var body)))
+         (app-exp (rator rand)
+                  (or (occurs-free? search-var rator)
+                      (occurs-free? search-var rand)))))
+
+(deftest occurs-free-test
+  (is (occurs-free? 'x (var-exp 'x)))
+  (is (not (occurs-free? 'x (var-exp 'y))))
+  (is (not (occurs-free? 'x (lambda-exp 'x (app-exp (var-exp 'x) (var-exp 'y))))))
+  (is (occurs-free? 'x (lambda-exp 'y (app-exp (var-exp 'x) (var-exp 'y)))))
+  (is (occurs-free? 'x (app-exp (lambda-exp 'x (var-exp 'x)) (app-exp (var-exp 'x) (var-exp 'y)))))
+  (is (occurs-free? 'x (lambda-exp 'y (lambda-exp 'z (app-exp (var-exp 'x) (app-exp (var-exp 'y) (var-exp 'z)))))))
+  (is (thrown? AssertionError (var-exp 'lambda))))
+
+(run-tests)

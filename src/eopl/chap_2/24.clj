@@ -1,9 +1,9 @@
 ;; Here is the difintion of binary trees using define-datatype.
 
 (ns eopl.chap-2.24
-  (:use clojure.test))
+  (:use clojure.test)
+  (:use eopl.core.define-datatype))
 
-;; TODO test
 
 (define-datatype bintree bintree?
   (leaf-node
@@ -15,14 +15,14 @@
 
 ;; implement a bintree-to-list procedure for binary trees, so that
 
-(bintree-to-list (interior-node 'a (leaf-node 3) (leaf-node 4)))
+;; (bintree-to-list (interior-node 'a (leaf-node 3) (leaf-node 4)))
 
 ;; returns
 
-'(interior-node
-  a
-  (leaf-node 3)
-  (leaf-node 4))
+;; '(interior-node
+;;   a
+;;   (leaf-node 3)
+;;   (leaf-node 4))
 
 (defn bintree-to-list [bt]
   (cases bintree bt
@@ -33,5 +33,11 @@
                               (bintree-to-list left)
                               (bintree-to-list right)))))
 
+(deftest bintree-to-list-test
+  (is (= (bintree-to-list (interior-node 'a (leaf-node 3) (leaf-node 4)))
+         '(interior-node
+           a
+           (leaf-node 3)
+           (leaf-node 4)))))
 
-
+(run-tests)

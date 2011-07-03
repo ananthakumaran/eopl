@@ -5,10 +5,6 @@
   (:use clojure.test)
   (:use eopl.chap-1.31))
 
-(defn number-elements [lst]
-  (if (empty? lst) '()
-      (g (list 0 (first lst)) (number-elements (rest lst)))))
-
 (defn g [item lst]
   (if (empty? lst)
     (list item)
@@ -16,6 +12,11 @@
                           (cons (inc (first it)) (rest it)))
                         lst)]
       (cons item new-list))))
+
+(defn number-elements [lst]
+  (if (empty? lst) '()
+      (g (list 0 (first lst)) (number-elements (rest lst)))))
+
 
 (deftest number-elements-test
   (is (= '((0 a) (1 b) (2 c) (3 d))
