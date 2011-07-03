@@ -1,4 +1,4 @@
-(ns eopl.chap-1
+(ns eopl.chap-1.9
   (:use clojure.test))
 
 (defn remove [x list]

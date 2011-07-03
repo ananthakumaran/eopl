@@ -1,6 +1,6 @@
 ;; (sort/predicate pred loi) returns a list of elements sorted by the predicate
 
-(ns eopl.chap-1
+(ns eopl.chap-1.30
   (:use clojure.test))
 
 (defn sort-predicate [pred loi]

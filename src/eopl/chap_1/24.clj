@@ -1,6 +1,6 @@
 ;; (every? pred lst) returns #f if any elements of lst fails to satisfy pred, and return #t otherwise
 
-(ns eopl.chap-1
+(ns eopl.chap-1.24
   (:use clojure.test))
 
 (defn every? [pred lst]

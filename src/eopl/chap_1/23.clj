@@ -2,7 +2,7 @@
 ;; element of lst that satisfies the predicate pred. If no element of
 ;; lst satisfies the predicate, then list-index returns #f.
 
-(ns eopl.chap-1
+(ns eopl.chap-1.23
   (:use clojure.test))
 
 (defn list-index [pred lst]

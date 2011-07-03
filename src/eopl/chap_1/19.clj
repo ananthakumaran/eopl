@@ -1,7 +1,7 @@
 ;; (list-set 1st n x) returns a list like lst, except that the n'th
 ;; element, using zero-based indexing, is x
 
-(ns eopl.chap-1
+(ns eopl.chap-1.19
   (:use clojure.test))
 
 (defn list-set [lst n x]

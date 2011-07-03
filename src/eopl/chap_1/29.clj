@@ -1,6 +1,6 @@
 ;; (sort loi) returns a list of the elements of loi in ascending order
 
-(ns eopl.chap-1
+(ns eopl.chap-1.29
   (:use clojure.test))
 
 (defn sort [loi]

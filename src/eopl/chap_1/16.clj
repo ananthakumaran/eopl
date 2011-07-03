@@ -2,7 +2,7 @@
 ;; returns a list with each 2-list reversed
 
 
-(ns eopl.chap-1
+(ns eopl.chap-1.16
   (:use clojure.test))
 
 (defn invert [lst]

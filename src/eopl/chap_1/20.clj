@@ -1,6 +1,6 @@
 ;; (count-occurences s slist) returns the number of occurences of s in slist
 
-(ns eopl.chap-1
+(ns eopl.chap-1.20
   (:use clojure.test))
 
 (defn count-occurences [s list]

@@ -1,7 +1,7 @@
 ;; (duple n x) returns a list containing n copies of x
 
 
-(ns eopl.chap-1
+(ns eopl.chap-1.15
   (:use clojure.test))
 
 (defn duple [n x]

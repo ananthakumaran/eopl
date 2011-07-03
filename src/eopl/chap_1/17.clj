@@ -1,5 +1,5 @@
 ;; (down lst) wraps parentheses around each top-level elements of lst
-(ns eopl.chap-1
+(ns eopl.chap-1.17
   (:use clojure.test))
 
 

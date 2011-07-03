@@ -1,7 +1,7 @@
 ;; (exists? pred lst) returns #t if any element of lst satisfies pred,
 ;; and returns #f otherwise
 
-(ns eopl.chap-1
+(ns eopl.chap-1.25
   (:use clojure.test))
 
 (defn exists? [pred lst]

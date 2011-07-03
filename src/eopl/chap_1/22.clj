@@ -1,7 +1,7 @@
 ;; (filter-in pred lst) returns the list of those elements in lst that
 ;; satisfy the predicate pred.
 
-(ns eopl.chap-1
+(ns eopl.chap-1.22
   (:use clojure.test))
 
 

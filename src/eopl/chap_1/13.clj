@@ -1,6 +1,6 @@
 ;; write subst using map
 
-(ns eopl.chap-1
+(ns eopl.chap-1.13
   (:use clojure.test))
 
 (defn subst [new old list]

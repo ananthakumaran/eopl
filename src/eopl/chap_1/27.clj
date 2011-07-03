@@ -2,7 +2,7 @@
 ;; the order in which theay occur when slist is printed. Intuitively,
 ;; flatten removes all the inner parentheses from its argument.
 
-(ns eopl.chap-1
+(ns eopl.chap-1.27
   (:use clojure.test))
 
 (defn flatten [lst]

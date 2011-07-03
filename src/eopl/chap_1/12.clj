@@ -1,4 +1,4 @@
-(ns eopl.chap-1
+(ns eopl.chap-1.12
   (:use clojure.test))
 
 (defn subst [new old list]

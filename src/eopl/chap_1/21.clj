@@ -3,7 +3,7 @@
 ;; cartesian product of sos1 ans sos2. The 2-list may appear in any
 ;; order
 
-(ns eopl.chap-1
+(ns eopl.chap-1.21
   (:use clojure.test))
 
 (defn product [x y]

@@ -3,7 +3,7 @@
 ;; as is. the value of (up (down lst)) is equivalent to lst, but (down (up lst)) is not necessarily lst.
 
 
-(ns eopl.chap-1
+(ns eopl.chap-1.26
   (:use clojure.test))
 
 (defn up [lst]
