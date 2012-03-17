@@ -32,14 +32,16 @@
 (defmacro cases [type-name expression & clauses]
   (let [variant (gensym)]
     `(let [~variant ~expression]
-      (cond ~@(mapcat (fn [clause]
-                        (let [variant-name (first clause)]
-                          (if (= variant-name 'else)
-                            `(:else ~@(rest clause))
-                            (let [[_ field-names & consequent] clause]
-                              `((= (:variant ~variant) '~variant-name)
-                                (apply
-                                 (fn [~@field-names]
-                                   ~@consequent)
-                                 (vals (:values ~variant))))))))
-                      clauses)))))
+       (if (not (= (:type ~variant) '~type-name))
+         (throw (Exception. (str "invalid type " '~type-name))))
+       (cond ~@(mapcat (fn [clause]
+                         (let [variant-name (first clause)]
+                           (if (= variant-name 'else)
+                             `(:else ~@(rest clause))
+                             (let [[_ field-names & consequent] clause]
+                               `((= (:variant ~variant) '~variant-name)
+                                 (apply
+                                  (fn [~@field-names]
+                                    ~@consequent)
+                                  (vals (:values ~variant))))))))
+                       clauses)))))
