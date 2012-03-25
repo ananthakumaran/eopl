@@ -10,6 +10,8 @@
   (diff-exp
    (exp1 expression?)
    (exp2 expression?))
+  (minus-exp
+   (exp1 expression?))
   (zero?-exp
    (exp1 expression?))
   (if-exp
@@ -59,6 +61,17 @@
             _ (lit \))
             ]
            (diff-exp exp1 exp2)))
+
+(def parse-minus-exp
+  (complex [_ space*
+            _ (lit-conc-seq "minus")
+            _ space*
+            _ (lit \()
+            _ space*
+            exp parse-expression
+            _ space*
+            - (lit \))]
+           (minus-exp exp)))
 
 (def parse-zero?-exp
   (complex [_ (lit-conc-seq "zero?")
@@ -121,6 +134,7 @@
 
 (def parse-expression
   (alt parse-const-exp
+       parse-minus-exp
        parse-diff-exp
        parse-zero?-exp
        parse-if-exp
