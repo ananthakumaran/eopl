@@ -1,42 +1,8 @@
 (ns eopl.core.let-lang
   (:use eopl.core.define-datatype)
   (:use eopl.core.env)
+  (:use eopl.core.let-lang-parser)
   (:use clojure.test))
-
-(defn identifier? [x]
-  (symbol? x))
-
-(define-datatype expression expression?
-  (const-exp
-   (num number?))
-  (diff-exp
-   (exp1 expression?)
-   (exp2 expression?))
-  (zero?-exp
-   (exp1 expression?))
-  (if-exp
-   (exp1 expression?)
-   (exp2 expression?)
-   (exp3 expression?))
-  (var-exp
-   (var identifier?))
-  (let-exp
-   (var identifier?)
-   (exp1 expression?)
-   (body expression?)))
-
-(define-datatype program program?
-  (a-program
-   (exp1 expression?)))
-
-(defn boolean? [x]
-  (or (true? x) (false? x)))
-
-(define-datatype expval expval?
-  (num-val
-   (num number?))
-  (bool-val
-   (bool boolean?)))
 
 (defn expval->num [val]
   (cases expval val
@@ -74,7 +40,7 @@
 
 
 (defn run [program]
-  (value-of-program program))
+  (value-of-program (parse program)))
 
 (defn result [program]
   (cases expval (run program)
@@ -82,19 +48,11 @@
          (bool-val (bool) bool)))
 
 (deftest let-test
-  (is (= (result (a-program
-                  (diff-exp (const-exp 10)
-                            (const-exp 10))))
+  (is (= (result "-(10,10)")
          0))
-  (is (= (result (a-program
-                  (let-exp 'x (const-exp 10)
-                           (var-exp 'x))))
+  (is (= (result "let x = 10 in x")
          10))
-  (is (= (result (a-program
-                  (if-exp
-                   (zero?-exp (const-exp 0))
-                   (const-exp 1)
-                   (const-exp 2))))
+  (is (= (result "if zero? (0) then 1 else 2")
          1)))
 
 (run-tests)
