@@ -10,6 +10,15 @@
   (diff-exp
    (exp1 expression?)
    (exp2 expression?))
+  (add-exp
+   (exp1 expression?)
+   (exp2 expression?))
+  (mul-exp
+   (exp1 expression?)
+   (exp2 expression?))
+  (div-exp
+   (exp1 expression?)
+   (exp2 expression?))
   (minus-exp
    (exp1 expression?))
   (zero?-exp
@@ -46,6 +55,26 @@
            (const-exp (Integer/parseInt (apply str num)))))
 
 (declare parse-expression)
+
+(defmacro def-parse-arth-exp [name op]
+  `(def ~(symbol (str "parse-" name "-exp"))
+     (complex [_# (lit ~op)
+               _# space*
+               _# (lit \()
+               _# space*
+               exp1# parse-expression
+               _# space*
+               _# (lit \,)
+               _# space*
+               exp2# parse-expression
+               _# space*
+               _# (lit \))]
+              (~(symbol (str name "-exp")) exp1# exp2#))))
+
+(def-parse-arth-exp diff \-)
+(def-parse-arth-exp add \+)
+(def-parse-arth-exp mul \*)
+(def-parse-arth-exp div \/)
 
 (def parse-diff-exp
   (complex [_ (lit \-)
@@ -136,6 +165,9 @@
   (alt parse-const-exp
        parse-minus-exp
        parse-diff-exp
+       parse-add-exp
+       parse-div-exp
+       parse-mul-exp
        parse-zero?-exp
        parse-if-exp
        parse-let-exp

@@ -14,6 +14,7 @@
          (bool-val (bool) bool)
          (else (throw (Exception. (str "invalid bool " val))))))
 
+
 (defn value-of [exp env]
   (cases expression exp
          (const-exp (num) (num-val num))
@@ -21,6 +22,18 @@
                    (num-val
                     (- (expval->num (value-of exp1 env))
                        (expval->num (value-of exp2 env)))))
+         (add-exp (exp1 exp2)
+                   (num-val
+                    (+ (expval->num (value-of exp1 env))
+                       (expval->num (value-of exp2 env)))))
+         (mul-exp (exp1 exp2)
+                   (num-val
+                    (* (expval->num (value-of exp1 env))
+                       (expval->num (value-of exp2 env)))))
+         (div-exp (exp1 exp2)
+                   (num-val
+                    (quot (expval->num (value-of exp1 env))
+                          (expval->num (value-of exp2 env)))))
          (minus-exp (exp)
                     (num-val
                      (- (expval->num (value-of exp env)))))
