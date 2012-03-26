@@ -14,29 +14,37 @@
          (bool-val (bool) bool)
          (else (throw (Exception. (str "invalid bool " val))))))
 
+(declare value-of)
+
+(defn num-val-of-exp [op env & exps]
+  (num-val
+   (apply op (map #(expval->num (value-of %1 env))
+                  exps))))
+
+(defn bool-val-of-exp [op env & exps]
+  (bool-val
+   (apply op (map #(expval->num (value-of %1 env))
+                  exps))))
 
 (defn value-of [exp env]
   (cases expression exp
          (const-exp (num) (num-val num))
          (diff-exp (exp1 exp2)
-                   (num-val
-                    (- (expval->num (value-of exp1 env))
-                       (expval->num (value-of exp2 env)))))
+                   (num-val-of-exp - env exp1 exp2))
          (add-exp (exp1 exp2)
-                   (num-val
-                    (+ (expval->num (value-of exp1 env))
-                       (expval->num (value-of exp2 env)))))
+                  (num-val-of-exp + env exp1 exp2))
          (mul-exp (exp1 exp2)
-                   (num-val
-                    (* (expval->num (value-of exp1 env))
-                       (expval->num (value-of exp2 env)))))
+                  (num-val-of-exp * env exp1 exp2))
          (div-exp (exp1 exp2)
-                   (num-val
-                    (quot (expval->num (value-of exp1 env))
-                          (expval->num (value-of exp2 env)))))
+                  (num-val-of-exp quot env exp1 exp2))
          (minus-exp (exp)
-                    (num-val
-                     (- (expval->num (value-of exp env)))))
+                    (num-val-of-exp - env exp))
+         (equal?-exp (exp1 exp2)
+                     (bool-val-of-exp = env exp1 exp2))
+         (less?-exp (exp1 exp2)
+                    (bool-val-of-exp < env exp1 exp2))
+         (greater?-exp (exp1 exp2)
+                       (bool-val-of-exp > env exp1 exp2))
          (zero?-exp (exp1)
                     (bool-val (zero? (expval->num (value-of exp1 env)))))
          (if-exp (exp1 exp2 exp3)

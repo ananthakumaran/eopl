@@ -19,6 +19,15 @@
   (div-exp
    (exp1 expression?)
    (exp2 expression?))
+  (equal?-exp
+   (exp1 expression?)
+   (exp2 expression?))
+  (greater?-exp
+   (exp1 expression?)
+   (exp2 expression?))
+  (less?-exp
+   (exp1 expression?)
+   (exp2 expression?))
   (minus-exp
    (exp1 expression?))
   (zero?-exp
@@ -87,6 +96,9 @@
 (def-parse-2-arg add (lit \+))
 (def-parse-2-arg mul (lit \*))
 (def-parse-2-arg div (lit \/))
+(def-parse-2-arg equal? (lit-conc-seq "equal?"))
+(def-parse-2-arg greater? (lit-conc-seq "greater?"))
+(def-parse-2-arg less? (lit-conc-seq "less?"))
 
 (def-parse-1-arg minus (lit-conc-seq "minus"))
 (def-parse-1-arg zero? (lit-conc-seq "zero?"))
@@ -148,6 +160,9 @@
        parse-add-exp
        parse-div-exp
        parse-mul-exp
+       parse-equal?-exp
+       parse-greater?-exp
+       parse-less?-exp
        parse-zero?-exp
        parse-if-exp
        parse-let-exp
