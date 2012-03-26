@@ -56,9 +56,20 @@
 
 (declare parse-expression)
 
-(defmacro def-parse-arth-exp [name op]
+(defmacro def-parse-1-arg [name op]
   `(def ~(symbol (str "parse-" name "-exp"))
-     (complex [_# (lit ~op)
+     (complex [_# ~op
+               _# space*
+               _# (lit \()
+               _# space*
+               exp1# parse-expression
+               _# space*
+               _# (lit \))]
+              (~(symbol (str name "-exp")) exp1#))))
+
+(defmacro def-parse-2-arg [name op]
+  `(def ~(symbol (str "parse-" name "-exp"))
+     (complex [_# ~op
                _# space*
                _# (lit \()
                _# space*
@@ -71,46 +82,15 @@
                _# (lit \))]
               (~(symbol (str name "-exp")) exp1# exp2#))))
 
-(def-parse-arth-exp diff \-)
-(def-parse-arth-exp add \+)
-(def-parse-arth-exp mul \*)
-(def-parse-arth-exp div \/)
 
-(def parse-diff-exp
-  (complex [_ (lit \-)
-            _ space*
-            _ (lit \()
-            _ space*
-            exp1 parse-expression
-            _ space*
-            _ (lit \,)
-            _ space*
-            exp2 parse-expression
-            _ space*
-            _ (lit \))
-            ]
-           (diff-exp exp1 exp2)))
+(def-parse-2-arg diff (lit \-))
+(def-parse-2-arg add (lit \+))
+(def-parse-2-arg mul (lit \*))
+(def-parse-2-arg div (lit \/))
 
-(def parse-minus-exp
-  (complex [_ space*
-            _ (lit-conc-seq "minus")
-            _ space*
-            _ (lit \()
-            _ space*
-            exp parse-expression
-            _ space*
-            - (lit \))]
-           (minus-exp exp)))
+(def-parse-1-arg minus (lit-conc-seq "minus"))
+(def-parse-1-arg zero? (lit-conc-seq "zero?"))
 
-(def parse-zero?-exp
-  (complex [_ (lit-conc-seq "zero?")
-            _ space+
-            _ (lit \()
-            _ space*
-            exp parse-expression
-            _ space*
-            _ (lit \))]
-           (zero?-exp exp)))
 
 (def parse-if-exp
   (complex [_ (lit-conc-seq "if")
