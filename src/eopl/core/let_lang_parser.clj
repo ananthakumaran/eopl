@@ -32,6 +32,16 @@
    (exp1 expression?))
   (zero?-exp
    (exp1 expression?))
+  (cons-exp
+   (exp1 expression?)
+   (exp2 expression?))
+  (car-exp
+   (exp expression?))
+  (cdr-exp
+   (exp expression?))
+  (null?-exp
+   (exp expression?))
+  (emptylist-exp)
   (if-exp
    (exp1 expression?)
    (exp2 expression?)
@@ -54,10 +64,12 @@
   (num-val
    (num number?))
   (bool-val
-   (bool boolean?)))
+   (bool boolean?))
+  (list-val
+   (list seq?)))
 
-(def space* (rep* (lit \space)))
-(def space+ (rep+ (lit \space)))
+(def space* (rep* (lit-alt-seq " \n\t")))
+(def space+ (rep+ (lit-alt-seq " \n\t")))
 
 (def parse-const-exp
   (complex [num (rep+ (lit-alt-seq (mapcat str (range 0 10))))]
@@ -99,9 +111,13 @@
 (def-parse-2-arg equal? (lit-conc-seq "equal?"))
 (def-parse-2-arg greater? (lit-conc-seq "greater?"))
 (def-parse-2-arg less? (lit-conc-seq "less?"))
+(def-parse-2-arg cons (lit-conc-seq "cons"))
 
 (def-parse-1-arg minus (lit-conc-seq "minus"))
 (def-parse-1-arg zero? (lit-conc-seq "zero?"))
+(def-parse-1-arg car (lit-conc-seq "car"))
+(def-parse-1-arg cdr (lit-conc-seq "cdr"))
+(def-parse-1-arg null? (lit-conc-seq "null?"))
 
 
 (def parse-if-exp
@@ -117,6 +133,12 @@
             _ space+
             exp3 parse-expression]
            (if-exp exp1 exp2 exp3)))
+
+(def parse-emptylist-exp
+  (complex [_ space*
+            _ (lit-conc-seq "emptylist")
+            _ space*]
+           (emptylist-exp)))
 
 (defn parse-charset [seq]
   (lit-alt-seq (mapcat (fn [[lower higher]]
@@ -164,6 +186,11 @@
        parse-greater?-exp
        parse-less?-exp
        parse-zero?-exp
+       parse-cons-exp
+       parse-car-exp
+       parse-cdr-exp
+       parse-null?-exp
+       parse-emptylist-exp
        parse-if-exp
        parse-let-exp
        parse-var-exp))
