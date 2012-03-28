@@ -9,8 +9,9 @@
   (let [variant-name (first variant)
         variant-spec (rest variant)
         variant-field-names (map first variant-spec)
-        variant-field-predicates (map second variant-spec)]
-    `(defn ~variant-name [~@variant-field-names]
+        variant-args (mapcat #(take (if (= (second %1) '&) 2 1) %1) variant-spec)
+        variant-field-predicates (map last variant-spec)]
+    `(defn ~variant-name [~@variant-args]
        {:pre [~@(map list variant-field-predicates variant-field-names)]}
        {:type '~type-name
         :variant '~variant-name

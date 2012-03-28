@@ -42,6 +42,8 @@
   (null?-exp
    (exp expression?))
   (emptylist-exp)
+  (list-exp
+   (items & #(every? expression? %1)))
   (if-exp
    (exp1 expression?)
    (exp2 expression?)
@@ -76,6 +78,34 @@
            (const-exp (Integer/parseInt (apply str num)))))
 
 (declare parse-expression)
+
+(def parse-arg-list
+  (alt (complex [_ space*
+                 exp parse-expression
+                 _ space*
+                 _ (lit \,)
+                 exps parse-arg-list]
+                (concat (list exp) exps))
+       (complex [_ space*
+                 exp parse-expression
+                 _ space*]
+                (list exp))
+       (complex [_ emptiness]
+                (list))))
+
+(def parse-args
+  (complex [_ space*
+            _ (lit \()
+            _ space*
+            exps parse-arg-list
+            _ space*
+            _ (lit \))]
+           exps))
+
+(def parse-list-exp
+  (complex [_ (lit-conc-seq "list")
+            args parse-args]
+           (list-exp args)))
 
 (defmacro def-parse-1-arg [name op]
   `(def ~(symbol (str "parse-" name "-exp"))
@@ -191,6 +221,7 @@
        parse-cdr-exp
        parse-null?-exp
        parse-emptylist-exp
+       parse-list-exp
        parse-if-exp
        parse-let-exp
        parse-var-exp))

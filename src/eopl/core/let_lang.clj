@@ -79,6 +79,9 @@
 
          (emptylist-exp () (list-val '()))
 
+         (list-exp (args)
+                   (list-val (map #(value-of %1 env) args)))
+
          (zero?-exp (exp1)
                     (bool-val (zero? (expval->num (value-of exp1 env)))))
          (if-exp (exp1 exp2 exp3)
@@ -88,7 +91,8 @@
          (var-exp (var) (apply-env env var))
          (let-exp (var exp1 body)
                   (let [new-env (extend-env env var (value-of exp1 env))]
-                    (value-of body new-env)))))
+                    (value-of body new-env)))
+         (else (throw (Exception. (str "unkonwn exp " exp))))))
 
 (defn value-of-program [pgm]
   (cases program pgm
