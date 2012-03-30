@@ -4,6 +4,8 @@
 
 (def identifier? (partial re-matches #"[a-zA-Z_][a-zA-Z0-9_]*"))
 
+(declare condition?)
+
 (define-datatype expression expression?
   (const-exp
    (num number?))
@@ -48,12 +50,19 @@
    (exp1 expression?)
    (exp2 expression?)
    (exp3 expression?))
+  (cond-exp
+   (conditions & #(every? condition? %1)))
   (var-exp
    (var identifier?))
   (let-exp
    (var identifier?)
    (exp1 expression?)
    (body expression?)))
+
+(define-datatype condition condition?
+  (clause-exp
+   (predicate expression?)
+   (consequence expression?)))
 
 (define-datatype program program?
   (a-program
@@ -205,6 +214,24 @@
             body parse-expression]
            (let-exp var exp body)))
 
+
+(def parse-clause
+  (complex [_ space*
+            predicate parse-expression
+            _ space+
+            _ (lit-conc-seq "==>")
+            _ space+
+            consequence parse-expression]
+           (clause-exp predicate consequence)))
+
+(def parse-cond-exp
+  (complex [_ (lit-conc-seq "cond")
+            _ space+
+            conditions (rep+ parse-clause)
+            _ space+
+            _ (lit-conc-seq "end")]
+           (cond-exp conditions)))
+
 (def parse-expression
   (alt parse-const-exp
        parse-minus-exp
@@ -224,6 +251,7 @@
        parse-list-exp
        parse-if-exp
        parse-let-exp
+       parse-cond-exp
        parse-var-exp))
 
 (def parse-program

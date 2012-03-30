@@ -92,6 +92,15 @@
          (let-exp (var exp1 body)
                   (let [new-env (extend-env env var (value-of exp1 env))]
                     (value-of body new-env)))
+
+         (cond-exp (conditions)
+                   (or (first (keep (fn [cond]
+                                      (cases condition cond
+                                             (clause-exp (predicate consequence)
+                                                    (if (expval->bool (value-of predicate env))
+                                                      (value-of consequence env)))))
+                                    conditions))
+                       (throw (Exception. (str "unhandled condition " conditions)))))
          (else (throw (Exception. (str "unkonwn exp " exp))))))
 
 (defn value-of-program [pgm]
