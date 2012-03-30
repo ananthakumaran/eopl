@@ -89,15 +89,15 @@
        (complex [_ space*
                  exp parse-expression
                  _ space*]
-                (list exp))
-       (complex [_ emptiness]
-                (list))))
+                (list exp))))
 
 (def parse-args
   (complex [_ space*
             _ (lit \()
             _ space*
-            exps parse-arg-list
+            exps (alt parse-arg-list
+                      (complex [_ emptiness]
+                               (list)))
             _ space*
             _ (lit \))]
            exps))
