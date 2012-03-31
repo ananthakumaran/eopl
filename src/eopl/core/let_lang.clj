@@ -38,6 +38,20 @@
    (apply op (map #(expval->num (value-of %1 env))
                   exps))))
 
+(defn value-of-bool-exp [exp env]
+  (cases boolean-expression exp
+         (equal?-exp (exp1 exp2)
+                     (bool-val-of-exp = env exp1 exp2))
+         (less?-exp (exp1 exp2)
+                    (bool-val-of-exp < env exp1 exp2))
+         (greater?-exp (exp1 exp2)
+                       (bool-val-of-exp > env exp1 exp2))
+
+         (null?-exp (exp1)
+                    (bool-val (empty? (expval->list (value-of exp1 env)))))
+         (zero?-exp (exp1)
+                    (bool-val (zero? (expval->num (value-of exp1 env)))))))
+
 (defn value-of [exp env]
   (cases expression exp
          (const-exp (num) (num-val num))
@@ -51,16 +65,6 @@
                   (num-val-of-exp quot env exp1 exp2))
          (minus-exp (exp)
                     (num-val-of-exp - env exp))
-         (equal?-exp (exp1 exp2)
-                     (bool-val-of-exp = env exp1 exp2))
-         (less?-exp (exp1 exp2)
-                    (bool-val-of-exp < env exp1 exp2))
-         (greater?-exp (exp1 exp2)
-                       (bool-val-of-exp > env exp1 exp2))
-
-         (null?-exp (exp1)
-                    (bool-val (empty? (expval->list (value-of exp1 env)))))
-
          (cons-exp (exp1 exp2)
                    (list-val
                     (cons (value-of exp1 env)
@@ -79,13 +83,13 @@
 
          (emptylist-exp () (list-val '()))
 
+         (bool-exp (exp)
+                   (value-of-bool-exp exp env))
          (list-exp (args)
                    (list-val (map #(value-of %1 env) args)))
 
-         (zero?-exp (exp1)
-                    (bool-val (zero? (expval->num (value-of exp1 env)))))
          (if-exp (exp1 exp2 exp3)
-                 (if (expval->bool (value-of exp1 env))
+                 (if (expval->bool (value-of-bool-exp exp1 env))
                    (value-of exp2 env)
                    (value-of exp3 env)))
          (var-exp (var) (apply-env env var))
@@ -97,7 +101,7 @@
                    (or (first (keep (fn [cond]
                                       (cases condition cond
                                              (clause-exp (predicate consequence)
-                                                    (if (expval->bool (value-of predicate env))
+                                                    (if (expval->bool (value-of-bool-exp predicate env))
                                                       (value-of consequence env)))))
                                     conditions))
                        (throw (Exception. (str "unhandled condition " conditions)))))
