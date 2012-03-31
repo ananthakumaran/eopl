@@ -44,6 +44,8 @@
    (var identifier?))
   (bool-exp
    (exp boolean-expression?))
+  (print-exp
+   (exp expression?))
   (let-exp
    (var identifier?)
    (exp1 expression?)
@@ -163,6 +165,7 @@
 (def-parse-1-arg car (lit-conc-seq "car"))
 (def-parse-1-arg cdr (lit-conc-seq "cdr"))
 (def-parse-1-arg null? (lit-conc-seq "null?"))
+(def-parse-1-arg print (lit-conc-seq "print"))
 
 
 (def parse-if-exp
@@ -265,6 +268,7 @@
        parse-if-exp
        parse-let-exp
        parse-cond-exp
+       parse-print-exp
        parse-var-exp))
 
 (def parse-program

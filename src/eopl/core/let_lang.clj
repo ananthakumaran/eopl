@@ -88,6 +88,9 @@
          (list-exp (args)
                    (list-val (map #(value-of %1 env) args)))
 
+         (print-exp (exp)
+                    (do (print (expval->val (value-of exp env)))
+                        (num-val 1)))
          (if-exp (exp1 exp2 exp3)
                  (if (expval->bool (value-of-bool-exp exp1 env))
                    (value-of exp2 env)
