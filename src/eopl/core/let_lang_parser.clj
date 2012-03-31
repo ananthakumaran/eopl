@@ -49,6 +49,9 @@
    (exp expression?))
   (let-exp
    (body expression?)
+   (bindings #(every? binding? %1)))
+  (let*-exp
+   (body expression?)
    (bindings #(every? binding? %1))))
 
 (define-datatype binding binding?
@@ -233,6 +236,15 @@
             body parse-expression]
            (let-exp body bindings)))
 
+(def parse-let*-exp
+  (complex [_ (lit-conc-seq "let*")
+            bindings parse-bindings
+            _ space*
+            _ (lit-conc-seq "in")
+            _ space+
+            body parse-expression]
+           (let*-exp body bindings)))
+
 
 (def parse-clause
   (complex [_ space*
@@ -277,6 +289,7 @@
        parse-list-exp
        parse-if-exp
        parse-let-exp
+       parse-let*-exp
        parse-cond-exp
        parse-print-exp
        parse-var-exp))

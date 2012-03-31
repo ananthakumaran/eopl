@@ -104,6 +104,14 @@
                                                           (extend-env new-env var (value-of exp env)))))
                                     env
                                     bindings)))
+         (let*-exp (body bindings)
+                  (value-of body
+                            (reduce (fn [new-env bind]
+                                      (cases binding bind
+                                             (binding-exp (var exp)
+                                                          (extend-env new-env var (value-of exp new-env)))))
+                                    env
+                                    bindings)))
 
          (cond-exp (conditions)
                    (or (first (keep (fn [cond]
