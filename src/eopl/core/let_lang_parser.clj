@@ -5,6 +5,7 @@
 (def identifier? (partial re-matches #"[a-zA-Z_][a-zA-Z0-9_]*"))
 
 (declare condition?)
+(declare binding?)
 (declare boolean-expression?)
 
 (define-datatype expression expression?
@@ -33,7 +34,7 @@
    (exp expression?))
   (emptylist-exp)
   (list-exp
-   (items & #(every? expression? %1)))
+   (items #(every? expression? %1)))
   (if-exp
    (exp1 boolean-expression?)
    (exp2 expression?)
@@ -47,9 +48,13 @@
   (print-exp
    (exp expression?))
   (let-exp
+   (body expression?)
+   (bindings #(every? binding? %1))))
+
+(define-datatype binding binding?
+  (binding-exp
    (var identifier?)
-   (exp1 expression?)
-   (body expression?)))
+   (value expression?)))
 
 (define-datatype boolean-expression boolean-expression?
   (equal?-exp
@@ -209,19 +214,24 @@
   (complex [var parse-identifier]
            (var-exp var)))
 
+(def parse-binding (complex [_ space+
+                             var parse-identifier
+                             _ space+
+                             _ (lit \=)
+                             _ space+
+                             exp parse-expression]
+                            (binding-exp var exp)))
+
+(def parse-bindings (rep+ parse-binding))
+
 (def parse-let-exp
   (complex [_ (lit-conc-seq "let")
-            _ space+
-            var parse-identifier
-            _ space+
-            _ (lit \=)
-            _ space+
-            exp parse-expression
-            _ space+
+            bindings parse-bindings
+            _ space*
             _ (lit-conc-seq "in")
             _ space+
             body parse-expression]
-           (let-exp var exp body)))
+           (let-exp body bindings)))
 
 
 (def parse-clause

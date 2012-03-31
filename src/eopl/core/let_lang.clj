@@ -96,9 +96,14 @@
                    (value-of exp2 env)
                    (value-of exp3 env)))
          (var-exp (var) (apply-env env var))
-         (let-exp (var exp1 body)
-                  (let [new-env (extend-env env var (value-of exp1 env))]
-                    (value-of body new-env)))
+         (let-exp (body bindings)
+                  (value-of body
+                            (reduce (fn [new-env bind]
+                                      (cases binding bind
+                                             (binding-exp (var exp)
+                                                          (extend-env new-env var (value-of exp env)))))
+                                    env
+                                    bindings)))
 
          (cond-exp (conditions)
                    (or (first (keep (fn [cond]
