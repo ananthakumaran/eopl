@@ -113,6 +113,16 @@
                                     env
                                     bindings)))
 
+         (unpack-exp (body vars value)
+                     (value-of body
+                               (reduce (fn [new-env [var val]]
+                                         (extend-env new-env var val))
+                                       env
+                                       (map (fn [var val]
+                                              [var val])
+                                            vars
+                                            (expval->list (value-of value env))))))
+
          (cond-exp (conditions)
                    (or (first (keep (fn [cond]
                                       (cases condition cond

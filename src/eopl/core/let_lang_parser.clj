@@ -52,7 +52,11 @@
    (bindings #(every? binding? %1)))
   (let*-exp
    (body expression?)
-   (bindings #(every? binding? %1))))
+   (bindings #(every? binding? %1)))
+  (unpack-exp
+   (body expression?)
+   (vars #(every? identifier? %1))
+   (value expression?)))
 
 (define-datatype binding binding?
   (binding-exp
@@ -245,6 +249,24 @@
             body parse-expression]
            (let*-exp body bindings)))
 
+(def parse-var
+  (complex [_ space+
+            var parse-identifier]
+           var))
+
+(def parse-unpack-exp
+  (complex [_ (lit-conc-seq "unpack")
+            vars (rep+ parse-var)
+            _ space*
+            _ (lit \=)
+            _ space*
+            value parse-expression
+            _ space*
+            _ (lit-conc-seq "in")
+            _ space*
+            body parse-expression]
+           (unpack-exp body vars value)))
+
 
 (def parse-clause
   (complex [_ space*
@@ -275,7 +297,8 @@
            (bool-exp exp)))
 
 (def parse-expression
-  (alt parse-const-exp
+  (alt parse-emptylist-exp
+       parse-const-exp
        parse-minus-exp
        parse-diff-exp
        parse-add-exp
@@ -284,12 +307,12 @@
        parse-cons-exp
        parse-car-exp
        parse-cdr-exp
-       parse-emptylist-exp
        parse-bool-exp
        parse-list-exp
        parse-if-exp
        parse-let-exp
        parse-let*-exp
+       parse-unpack-exp
        parse-cond-exp
        parse-print-exp
        parse-var-exp))
