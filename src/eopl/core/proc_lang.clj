@@ -109,6 +109,10 @@
          (proc-exp (var body)
                    (proc-val (procedure var body env)))
 
+         (letproc-exp (name var proc-body body)
+                      (let [new-env (extend-env env name (proc-val (procedure var proc-body env)))]
+                        (value-of body new-env)))
+
          (call-exp (rator rand)
                    (let [proc (expval->proc (value-of rator env))
                          arg (value-of rand env)]

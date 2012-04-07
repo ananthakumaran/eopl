@@ -61,6 +61,11 @@
   (proc-exp
    (var identifier?)
    (body expression?))
+  (letproc-exp
+   (name identifier?)
+   (var identifier?)
+   (proc-body expression?)
+   (body expression?))
   (call-exp
    (rator expression?)
    (rand expression?)))
@@ -214,13 +219,31 @@
   (complex [_ (lit-conc-seq "proc")
             _ space*
             _ (lit \()
-           _ space*
-           var parse-identifier
-           _ space*
-           _ (lit \))
-           _ space*
-           body parse-expression]
+            _ space*
+            var parse-identifier
+            _ space*
+            _ (lit \))
+            _ space*
+            body parse-expression]
            (proc-exp var body)))
+
+(def parse-letproc-exp
+  (complex [_ (lit-conc-seq "letproc")
+            _ space+
+            name parse-identifier
+            _ space*
+            _ (lit \()
+            _ space*
+            var parse-identifier
+            _ space*
+            _ (lit \))
+            _ space*
+            proc-body parse-expression
+            _ space+
+            _ (lit-conc-seq "in")
+            _ space+
+            body parse-expression]
+           (letproc-exp name var proc-body body)))
 
 (def parse-call-exp
   (complex [_ (lit \()
@@ -353,6 +376,7 @@
        parse-unpack-exp
        parse-cond-exp
        parse-print-exp
+       parse-letproc-exp
        parse-proc-exp
        parse-call-exp
        parse-var-exp))
