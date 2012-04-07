@@ -4,6 +4,9 @@
 (defn empty-env []
   {})
 
+(defn environment? [x]
+  (map? x))
+
 (defn empty-env? [env]
   (empty? env))
 
