@@ -59,16 +59,16 @@
    (vars #(every? identifier? %1))
    (value expression?))
   (proc-exp
-   (var identifier?)
+   (vars #(every? identifier? %1))
    (body expression?))
   (letproc-exp
    (name identifier?)
-   (var identifier?)
+   (vars #(every? identifier? %1))
    (proc-body expression?)
    (body expression?))
   (call-exp
    (rator expression?)
-   (rand expression?)))
+   (rands #(every? expression? %1))))
 
 (define-datatype binding binding?
   (binding-exp
@@ -77,7 +77,7 @@
 
 (define-datatype proc proc?
   (procedure
-   (var identifier?)
+   (vars #(every? identifier? %1))
    (body expression?)
    (saved-env environment?)))
 
@@ -134,7 +134,7 @@
                  _ space*
                  _ (lit \,)
                  exps parse-arg-list]
-                (concat (list exp) exps))
+                (cons exp exps))
        (complex [_ space*
                  exp parse-expression
                  _ space*]
@@ -215,17 +215,27 @@
            (if-exp exp1 exp2 exp3)))
 
 (declare parse-identifier)
+
+(def parse-var-list
+  (alt (complex [_ space*
+                 var parse-identifier
+                 _ space+
+                 vars parse-var-list]
+                (cons var vars))
+       (complex [_ space*
+                 var parse-identifier]
+                (list var))))
+
 (def parse-proc-exp
   (complex [_ (lit-conc-seq "proc")
             _ space*
             _ (lit \()
-            _ space*
-            var parse-identifier
+            vars parse-var-list
             _ space*
             _ (lit \))
             _ space*
             body parse-expression]
-           (proc-exp var body)))
+           (proc-exp vars body)))
 
 (def parse-letproc-exp
   (complex [_ (lit-conc-seq "letproc")
@@ -233,8 +243,7 @@
             name parse-identifier
             _ space*
             _ (lit \()
-            _ space*
-            var parse-identifier
+            vars parse-var-list
             _ space*
             _ (lit \))
             _ space*
@@ -243,17 +252,27 @@
             _ (lit-conc-seq "in")
             _ space+
             body parse-expression]
-           (letproc-exp name var proc-body body)))
+           (letproc-exp name vars proc-body body)))
+
+(def parse-rands
+  (alt (complex [_ space*
+                 rand parse-expression
+                 _ space+
+                 rands parse-rands]
+                (cons rand rands))
+       (complex [_ space*
+                 rand parse-expression]
+                (list rand))))
 
 (def parse-call-exp
   (complex [_ (lit \()
             _ space*
             rator parse-expression
             _ space+
-            rand parse-expression
+            rands parse-rands
             _ space*
             _ (lit \))]
-           (call-exp rator rand)))
+           (call-exp rator rands)))
 
 (def parse-emptylist-exp
   (complex [_ space*

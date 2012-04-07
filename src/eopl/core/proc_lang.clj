@@ -33,10 +33,16 @@
 
 (declare value-of)
 
-(defn apply-procedure [p arg]
+
+(defn apply-procedure [p args]
   (cases proc p
-         (procedure (var body saved-env)
-                    (value-of body (extend-env saved-env var arg)))))
+         (procedure (vars body saved-env)
+                    (let [new-env (reduce
+                                   (fn [new-env [var arg]]
+                                     (extend-env new-env var arg))
+                                   saved-env
+                                   (map (fn [x y] [x y]) vars args))]
+                      (value-of body new-env)))))
 
 (defn num-val-of-exp [op env & exps]
   (num-val
@@ -106,17 +112,19 @@
                    (value-of exp2 env)
                    (value-of exp3 env)))
 
-         (proc-exp (var body)
-                   (proc-val (procedure var body env)))
+         (proc-exp (vars body)
+                   (proc-val (procedure vars body env)))
 
-         (letproc-exp (name var proc-body body)
-                      (let [new-env (extend-env env name (proc-val (procedure var proc-body env)))]
+         (letproc-exp (name vars proc-body body)
+                      (let [new-env (extend-env env name (proc-val (procedure vars proc-body env)))]
                         (value-of body new-env)))
 
-         (call-exp (rator rand)
+         (call-exp (rator rands)
                    (let [proc (expval->proc (value-of rator env))
-                         arg (value-of rand env)]
-                     (apply-procedure proc arg)))
+                         args (map
+                               #(value-of %1 env)
+                               rands)]
+                     (apply-procedure proc args)))
          (var-exp (var) (apply-env env var))
          (let-exp (body bindings)
                   (value-of body
@@ -176,3 +184,5 @@
          -100)))
 
 (run-tests)
+
+
