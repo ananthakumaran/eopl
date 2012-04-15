@@ -3,7 +3,7 @@
   (:use eopl.core.env)
   (:use name.choi.joshua.fnparse))
 
-(def identifier? (partial re-matches #"[a-zA-Z_][a-zA-Z0-9_]*"))
+(def identifier? (partial re-matches #"([a-zA-Z_][a-zA-Z0-9_?]*)|[*+/-]"))
 
 (declare condition?)
 (declare binding?)
@@ -35,13 +35,13 @@
    (exp expression?))
   (emptylist-exp)
   (list-exp
-   (items #(every? expression? %1)))
+   (items & #(every? expression? %1)))
   (if-exp
    (exp1 boolean-expression?)
    (exp2 expression?)
    (exp3 expression?))
   (cond-exp
-   (conditions & #(every? condition? %1)))
+   (conditions #(every? condition? %1)))
   (var-exp
    (var identifier?))
   (bool-exp
@@ -128,6 +128,29 @@
 (declare parse-expression)
 (declare parse-boolean-expression)
 
+(def primitives (atom '{}))
+
+(defn primitive [name op]
+  (swap! primitives assoc (symbol op) (symbol name)))
+
+(defn primitive? [rator]
+  (cases expression rator
+         (var-exp (var)
+                  (contains? @primitives (symbol var)))
+         (else false)))
+
+(defn primitive-exp [rator rands]
+  (let [result (cases expression rator
+                      (var-exp (var)
+                               (apply
+                                (ns-resolve 'eopl.core.proc-lang-parser
+                                            (symbol (str ((symbol var) @primitives) "-exp")))
+                                rands))
+               (else (throw (Exception. (str "invalid primitive " rator)))))]
+    (if (boolean-expression? result)
+      (bool-exp result)
+      result)))
+
 (def parse-arg-list
   (alt (complex [_ space*
                  exp parse-expression
@@ -151,53 +174,58 @@
             _ (lit \))]
            exps))
 
+(primitive 'list 'list)
 (def parse-list-exp
   (complex [_ (lit-conc-seq "list")
             args parse-args]
-           (list-exp args)))
+           (apply list-exp args)))
 
 (defmacro def-parse-1-arg [name op]
-  `(def ~(symbol (str "parse-" name "-exp"))
-     (complex [_# ~op
-               _# space*
-               _# (lit \()
-               _# space*
-               exp1# parse-expression
-               _# space*
-               _# (lit \))]
-              (~(symbol (str name "-exp")) exp1#))))
+  `(do
+     (primitive '~name ~op)
+     (def ~(symbol (str "parse-" name "-exp"))
+       (complex [_# (lit-conc-seq ~op)
+                 _# space*
+                 _# (lit \()
+                 _# space*
+                 exp1# parse-expression
+                 _# space*
+                 _# (lit \))]
+                (~(symbol (str name "-exp")) exp1#)))))
 
 (defmacro def-parse-2-arg [name op]
-  `(def ~(symbol (str "parse-" name "-exp"))
-     (complex [_# ~op
-               _# space*
-               _# (lit \()
-               _# space*
-               exp1# parse-expression
-               _# space*
-               _# (lit \,)
-               _# space*
-               exp2# parse-expression
-               _# space*
-               _# (lit \))]
-              (~(symbol (str name "-exp")) exp1# exp2#))))
+  `(do
+     (primitive '~name ~op)
+     (def ~(symbol (str "parse-" name "-exp"))
+       (complex [_# (lit-conc-seq ~op)
+                 _# space*
+                 _# (lit \()
+                 _# space*
+                 exp1# parse-expression
+                 _# space*
+                 _# (lit \,)
+                 _# space*
+                 exp2# parse-expression
+                 _# space*
+                 _# (lit \))]
+                (~(symbol (str name "-exp")) exp1# exp2#)))))
 
 
-(def-parse-2-arg diff (lit \-))
-(def-parse-2-arg add (lit \+))
-(def-parse-2-arg mul (lit \*))
-(def-parse-2-arg div (lit \/))
-(def-parse-2-arg equal? (lit-conc-seq "equal?"))
-(def-parse-2-arg greater? (lit-conc-seq "greater?"))
-(def-parse-2-arg less? (lit-conc-seq "less?"))
-(def-parse-2-arg cons (lit-conc-seq "cons"))
+(def-parse-2-arg diff "-")
+(def-parse-2-arg add "+")
+(def-parse-2-arg mul "*")
+(def-parse-2-arg div "/")
+(def-parse-2-arg equal? "equal?")
+(def-parse-2-arg greater? "greater?")
+(def-parse-2-arg less? "less?")
+(def-parse-2-arg cons "cons")
 
-(def-parse-1-arg minus (lit-conc-seq "minus"))
-(def-parse-1-arg zero? (lit-conc-seq "zero?"))
-(def-parse-1-arg car (lit-conc-seq "car"))
-(def-parse-1-arg cdr (lit-conc-seq "cdr"))
-(def-parse-1-arg null? (lit-conc-seq "null?"))
-(def-parse-1-arg print (lit-conc-seq "print"))
+(def-parse-1-arg minus "minus")
+(def-parse-1-arg zero? "zero?")
+(def-parse-1-arg car "car")
+(def-parse-1-arg cdr "cdr")
+(def-parse-1-arg null? "null?")
+(def-parse-1-arg print "print")
 
 
 (def parse-if-exp
@@ -264,15 +292,30 @@
                  rand parse-expression]
                 (list rand))))
 
+(def parse-arithimetic-rator
+  (complex [op (alt (lit \*)
+                    (lit \+)
+                    (lit \/)
+                    (lit \-))]
+           (var-exp (str op))))
+
 (def parse-call-exp
   (complex [_ (lit \()
             _ space*
-            rator parse-expression
-            _ space+
-            rands parse-rands
+            rator (alt parse-expression
+                       parse-arithimetic-rator)
+            rands (alt (complex [_ space+
+                                 rands parse-rands]
+                                rands)
+                       (complex [_ space*]
+                                (list)))
             _ space*
             _ (lit \))]
-           (call-exp rator rands)))
+           (if (primitive? rator)
+             (primitive-exp rator rands)
+             (call-exp rator rands))))
+
+(primitive 'emptylist 'emptylist)
 
 (def parse-emptylist-exp
   (complex [_ space*
@@ -291,6 +334,7 @@
                              [[\a \z]
                               [\A \Z]]))
                        (rep* (alt (lit \_)
+                                  (lit \?)
                                   (parse-charset
                                    [[\a \z]
                                     [\A \Z]

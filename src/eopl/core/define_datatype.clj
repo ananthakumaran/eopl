@@ -8,14 +8,15 @@
 (defmacro data-type-variant [variant type-name]
   (let [variant-name (first variant)
         variant-spec (rest variant)
-        variant-args (map first variant-spec)
+        variant-field-names (map first variant-spec)
+        variant-args (mapcat #(reverse (take (if (= (second %1) '&) 2 1) %1)) variant-spec)
         variant-field-predicates (map last variant-spec)]
     `(defn ~variant-name [~@variant-args]
-       {:pre [~@(map list variant-field-predicates variant-args)]}
+       {:pre [~@(map list variant-field-predicates variant-field-names)]}
        {:type '~type-name
         :variant '~variant-name
         :values (array-map
-                 ~@(mapcat #(list (keyword %1) %1) variant-args))})))
+                 ~@(mapcat #(list (keyword %1) %1) variant-field-names))})))
 
 ;; (define-datatype type-name type-predicate-name
 ;;   { (variant-name { (field-name predicate ) }* ) }+)

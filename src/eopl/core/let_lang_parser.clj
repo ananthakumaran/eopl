@@ -40,7 +40,7 @@
    (exp2 expression?)
    (exp3 expression?))
   (cond-exp
-   (conditions & #(every? condition? %1)))
+   (conditions #(every? condition? %1)))
   (var-exp
    (var identifier?))
   (bool-exp
