@@ -66,7 +66,9 @@
          (null?-exp (exp1)
                     (bool-val (empty? (expval->list (value-of exp1 env)))))
          (zero?-exp (exp1)
-                    (bool-val (zero? (expval->num (value-of exp1 env)))))))
+                    (bool-val (zero? (expval->num (value-of exp1 env)))))
+         (true-exp () (bool-val true))
+         (false-exp () (bool-val false))))
 
 (defn value-of [exp env]
   (cases expression exp

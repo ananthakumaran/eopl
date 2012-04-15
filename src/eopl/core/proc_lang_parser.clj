@@ -94,7 +94,9 @@
   (zero?-exp
    (exp1 expression?))
   (null?-exp
-   (exp expression?)))
+   (exp expression?))
+  (true-exp)
+  (false-exp))
 
 (define-datatype condition condition?
   (clause-exp
@@ -315,13 +317,16 @@
              (primitive-exp rator rands)
              (call-exp rator rands))))
 
-(primitive 'emptylist 'emptylist)
 
-(def parse-emptylist-exp
-  (complex [_ space*
-            _ (lit-conc-seq "emptylist")
-            _ space*]
-           (emptylist-exp)))
+(defmacro defkeyword [name]
+  `(def ~(symbol (str "parse-" name "-exp"))
+     (complex [_# space*
+               _# (lit-conc-seq ~name)]
+              (~(symbol (str name "-exp"))))))
+
+(defkeyword "emptylist")
+(defkeyword "true")
+(defkeyword "false")
 
 (defn parse-charset [seq]
   (lit-alt-seq (mapcat (fn [[lower higher]]
@@ -414,7 +419,9 @@
        parse-greater?-exp
        parse-less?-exp
        parse-zero?-exp
-       parse-null?-exp))
+       parse-null?-exp
+       parse-true-exp
+       parse-false-exp))
 
 (def parse-bool-exp
   (complex [exp parse-boolean-expression]
