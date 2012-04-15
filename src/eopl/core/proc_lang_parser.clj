@@ -7,7 +7,6 @@
 
 (declare condition?)
 (declare binding?)
-(declare boolean-expression?)
 
 (define-datatype expression expression?
   (const-exp
@@ -37,15 +36,13 @@
   (list-exp
    (items & #(every? expression? %1)))
   (if-exp
-   (exp1 boolean-expression?)
+   (exp1 expression?)
    (exp2 expression?)
    (exp3 expression?))
   (cond-exp
    (conditions #(every? condition? %1)))
   (var-exp
    (var identifier?))
-  (bool-exp
-   (exp boolean-expression?))
   (print-exp
    (exp expression?))
   (let-exp
@@ -68,20 +65,7 @@
    (body expression?))
   (call-exp
    (rator expression?)
-   (rands #(every? expression? %1))))
-
-(define-datatype binding binding?
-  (binding-exp
-   (var identifier?)
-   (value expression?)))
-
-(define-datatype proc proc?
-  (procedure
-   (vars #(every? identifier? %1))
-   (body expression?)
-   (saved-env environment?)))
-
-(define-datatype boolean-expression boolean-expression?
+   (rands #(every? expression? %1)))
   (equal?-exp
    (exp1 expression?)
    (exp2 expression?))
@@ -98,9 +82,20 @@
   (true-exp)
   (false-exp))
 
+(define-datatype binding binding?
+  (binding-exp
+   (var identifier?)
+   (value expression?)))
+
+(define-datatype proc proc?
+  (procedure
+   (vars #(every? identifier? %1))
+   (body expression?)
+   (saved-env environment?)))
+
 (define-datatype condition condition?
   (clause-exp
-   (predicate boolean-expression?)
+   (predicate expression?)
    (consequence expression?)))
 
 (define-datatype program program?
@@ -128,7 +123,6 @@
            (const-exp (Integer/parseInt (apply str num)))))
 
 (declare parse-expression)
-(declare parse-boolean-expression)
 
 (def primitives (atom '{}))
 
@@ -149,9 +143,7 @@
                                             (symbol (str ((symbol var) @primitives) "-exp")))
                                 rands))
                (else (throw (Exception. (str "invalid primitive " rator)))))]
-    (if (boolean-expression? result)
-      (bool-exp result)
-      result)))
+    result))
 
 (def parse-arg-list
   (alt (complex [_ space*
@@ -233,7 +225,7 @@
 (def parse-if-exp
   (complex [_ (lit-conc-seq "if")
             _ space+
-            exp1 parse-boolean-expression
+            exp1 parse-expression
             _ space+
             _ (lit-conc-seq "then")
             _ space+
@@ -399,7 +391,7 @@
 
 (def parse-clause
   (complex [_ space*
-            predicate parse-boolean-expression
+            predicate parse-expression
             _ space+
             _ (lit-conc-seq "==>")
             _ space+
@@ -414,19 +406,6 @@
             _ (lit-conc-seq "end")]
            (cond-exp conditions)))
 
-(def parse-boolean-expression
-  (alt parse-equal?-exp
-       parse-greater?-exp
-       parse-less?-exp
-       parse-zero?-exp
-       parse-null?-exp
-       parse-true-exp
-       parse-false-exp))
-
-(def parse-bool-exp
-  (complex [exp parse-boolean-expression]
-           (bool-exp exp)))
-
 (def parse-expression
   (alt parse-emptylist-exp
        parse-const-exp
@@ -438,7 +417,13 @@
        parse-cons-exp
        parse-car-exp
        parse-cdr-exp
-       parse-bool-exp
+       parse-equal?-exp
+       parse-greater?-exp
+       parse-less?-exp
+       parse-zero?-exp
+       parse-null?-exp
+       parse-true-exp
+       parse-false-exp
        parse-list-exp
        parse-if-exp
        parse-let-exp
