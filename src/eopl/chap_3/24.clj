@@ -5,7 +5,7 @@
   (:use eopl.core.proc-lang)
   (:use clojure.test))
 
-(deftest mutually-recursive
+(deftest mutually-recursive-test
   (is (= (result "let _even = proc(e?)
                       proc(o?)
                        proc(n)
