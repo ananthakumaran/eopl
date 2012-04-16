@@ -2,6 +2,7 @@
   (:use eopl.core.define-datatype)
   (:use eopl.core.env)
   (:use eopl.core.proc-lang-parser)
+  (:use clojure.set)
   (:use clojure.test))
 
 (defn expval->num [val]
@@ -32,6 +33,81 @@
                    (map #(expval->val %1) lst))))
 
 (declare value-of)
+
+;; xxx should cache the fv of a exp instead of find it every time
+(defn fv [exp env]
+  "returns list of free variables in the exp"
+  (cases expression exp
+         (diff-exp (e1 e2) (union (fv e1 env) (fv e2 env)))
+         (add-exp (e1 e2) (union (fv e1 env) (fv e2 env)))
+         (mul-exp (e1 e2) (union (fv e1 env) (fv e2 env)))
+         (div-exp (e1 e2) (union (fv e1 env) (fv e2 env)))
+         (minus-exp (e1) (union (fv e1 env)))
+         (cons-exp (e1 e2) (union (fv e1 env) (fv e2 env)))
+         (car-exp (e1) (union (fv e1 env)))
+         (cdr-exp (e1) (union (fv e1 env)))
+         (list-exp (items) (apply union (map (fn [i] (fv i env)) items)))
+
+         (cond-exp (conditions)
+                   (apply union (map (fn [c]
+                                       (cases condition c
+                                              (clause-exp (predicate consequence)
+                                                          (union (fv predicate env)
+                                                                 (fv consequence env)))))
+                                     conditions)))
+
+         (if-exp (e1 e2 e3) (union (fv e1 env) (fv e2 env) (fv e3 env)))
+         (var-exp (var) (if (contains? env var)
+                          #{}
+                          #{var}))
+         (print-exp (e1) (union (fv e1 env)))
+         (let-exp (body bindings)
+                  (let [vf (map
+                            (fn [b]
+                              (cases binding b
+                                     (binding-exp (var value)
+                                                  [var (fv value env)])))
+                            bindings)
+                        n-fv (apply union (map #(second %1) vf))
+                        n-env (union env (set (map #(first %1) vf)))]
+                    (union (fv body n-env)
+                           n-fv)))
+
+         (let*-exp (body bindings)
+                   (let [[n-env n-fv] (reduce
+                                       (fn [[n-env n-fv] b]
+                                         (cases binding b
+                                                (binding-exp (var value)
+                                                             [(union n-env #{var}) (union (fv value n-env) n-fv)])))
+                                       [env #{}]
+                                       bindings)]
+                     (union (fv body n-env)
+                            n-fv)))
+
+
+         (unpack-exp (body vars value)
+                     (let [n-fv (fv value env)
+                           n-env (union env (set vars))]
+                       (union (fv body n-env)
+                              n-fv)))
+
+         (proc-exp (vars body)
+                   (fv body (union env (set vars))))
+
+         (letproc-exp (name vars proc-body body)
+                   (union (fv proc-body (union env (set vars)))
+                           (fv body (union env #{name}))))
+
+         (call-exp (rator rands)
+                   (union (fv rator env)
+                          (apply union (map #(fv %1 env) rands))))
+
+         (equal?-exp (e1 e2) (union (fv e1 env) (fv e2 env)))
+         (greater?-exp (e1 e2) (union (fv e1 env) (fv e2 env)))
+         (less?-exp (e1 e2) (union (fv e1 env) (fv e2 env)))
+         (zero?-exp (e1) (union (fv e1 env)))
+         (null?-exp (e1) (union (fv e1 env)))
+         (else #{})))
 
 
 (defn apply-procedure [p args]
@@ -111,7 +187,9 @@
                    (value-of exp3 env)))
 
          (proc-exp (vars body)
-                   (proc-val (procedure vars body env)))
+                   (proc-val (procedure vars body (select-keys
+                                                   env
+                                                   (fv body (set vars))))))
 
          (letproc-exp (name vars proc-body body)
                       (let [new-env (extend-env env name (proc-val (procedure vars proc-body env)))]
