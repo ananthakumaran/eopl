@@ -141,13 +141,19 @@
                                     env
                                     bindings)))
 
-         (letrec-exp (name vars proc-body body)
-                     (value-of body
+         (letrec-exp (body proc-bindings)
+                     (let [pbs (into {} (map (fn [pb]
+                                               (cases proc-binding pb
+                                                      (proc-binding-exp (name vars body)
+                                                                        [name [name vars body]])))
+                                             proc-bindings))]
+                       (value-of body
                                (extend-env-rec
                                 env
-                                name
-                                (fn [new-env]
-                                  (proc-val (procedure vars proc-body new-env))))))
+                                (fn [name new-env]
+                                  (let [[name vars body] (get pbs name)]
+                                    (proc-val (procedure vars body new-env))))
+                                (keys pbs)))))
 
          (unpack-exp (body vars value)
                      (value-of body

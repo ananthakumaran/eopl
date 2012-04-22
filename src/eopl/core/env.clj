@@ -16,10 +16,13 @@
 (defn atom? [x]
   (instance? clojure.lang.Atom x))
 
-(defn extend-env-rec [env name proc]
-  (let [place-holder (atom :new-env)
-        new-env (conj env [name place-holder])]
-    (reset! place-holder (proc new-env))
+(defn extend-env-rec [env proc names]
+  (let [place-holders (map (fn [name] [name (atom :new-env)]) names)
+        new-env (reduce conj
+                        env
+                        place-holders)]
+    (doseq [[name place-holder] place-holders]
+      (reset! place-holder (proc name new-env)))
     new-env))
 
 (defn has-binding? [env search-var]

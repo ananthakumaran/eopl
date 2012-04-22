@@ -7,6 +7,7 @@
 
 (declare condition?)
 (declare binding?)
+(declare proc-binding?)
 
 (define-datatype expression expression?
   (const-exp
@@ -64,10 +65,8 @@
    (proc-body expression?)
    (body expression?))
   (letrec-exp
-   (name identifier?)
-   (vars #(every? identifier? %1))
-   (proc-body expression?)
-   (body expression?))
+   (body expression?)
+   (bindings #(every? proc-binding? %1)))
   (call-exp
    (rator expression?)
    (rands #(every? expression? %1)))
@@ -91,6 +90,12 @@
   (binding-exp
    (var identifier?)
    (value expression?)))
+
+(define-datatype proc-binding proc-binding?
+  (proc-binding-exp
+   (name identifier?)
+   (vars #(every? identifier? %1))
+   (body expression?)))
 
 (define-datatype proc proc?
   (procedure
@@ -264,9 +269,8 @@
             body parse-expression]
            (proc-exp vars body)))
 
-(def parse-letrec-exp
-  (complex [_ (lit-conc-seq "letrec")
-            _ space*
+(def parse-proc-binding
+  (complex [_ space*
             name parse-identifier
             _ space*
             _ (lit \()
@@ -276,12 +280,17 @@
             _ space*
             _ (lit \=)
             _ space*
-            proc-body parse-expression
+            body parse-expression]
+           (proc-binding-exp name vars body)))
+
+(def parse-letrec-exp
+  (complex [_ (lit-conc-seq "letrec")
+            proc-bindings (rep+ parse-proc-binding)
             _ space+
             _ (lit-conc-seq "in")
             _ space+
             body parse-expression]
-           (letrec-exp name vars proc-body body)))
+           (letrec-exp body proc-bindings)))
 
 (def parse-letproc-exp
   (complex [_ (lit-conc-seq "letproc")
