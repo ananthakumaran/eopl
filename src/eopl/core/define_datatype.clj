@@ -34,7 +34,7 @@
   (let [variant (gensym)]
     `(let [~variant ~expression]
        (if (not (= (:type ~variant) '~type-name))
-         (throw (Exception. (str "invalid type " '~type-name))))
+         (throw (Exception. (str "invalid type expected " '~type-name " found '" (:type ~variant) "'"))))
        (cond ~@(mapcat (fn [clause]
                          (let [variant-name (first clause)]
                            (if (= variant-name 'else)
