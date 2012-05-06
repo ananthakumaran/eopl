@@ -2,7 +2,8 @@
   (:use eopl.core.define-datatype)
   (:use eopl.core.env)
   (:use eopl.core.explicit-ref-lang-parser)
-  (:use eopl.core.link-ref)
+  ;;  (:use eopl.core.link-ref)
+  (:use eopl.core.vector-ref)
   (:use clojure.set)
   (:use clojure.test))
 
@@ -214,7 +215,7 @@
 (defn result [program]
   (expval->val (run program)))
 
-(deftest proc-test
+(deftest explicit-ref-test
   (is (= (result "let x = newref(newref(0))
                   in begin
                     setref(de-ref(x), 11);
