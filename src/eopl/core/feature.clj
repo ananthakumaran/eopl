@@ -102,3 +102,20 @@
         (result "cond zero?(10) ==> 0 end"))))
 
 
+(defeature assign
+  (is (= (result "let f = proc (x) proc (y)
+                   begin
+                     set x = -(x, minus(1));
+                     -(x,y)
+                   end
+         in ((f 44) 33)")
+         12))
+  (is (= (result "let times4 = 0
+         in begin
+           set times4 = proc (x)
+                      if zero?(x)
+                      then 0
+                      else -((times4 -(x,1)), minus(4)) ;
+           (times4 3)
+         end")
+         12)))
