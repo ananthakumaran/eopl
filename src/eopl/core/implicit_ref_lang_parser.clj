@@ -50,6 +50,9 @@
   (let-exp
    (body expression?)
    (bindings #(every? binding? %1)))
+  (setdynamic-exp
+   (body expression?)
+   (bindings #(every? binding? %1)))
   (let*-exp
    (body expression?)
    (bindings #(every? binding? %1)))
@@ -403,6 +406,15 @@
             body parse-expression]
            (let-exp body bindings)))
 
+(def parse-setdynamic-exp
+  (complex [_ (lit-conc-seq "setdynamic")
+            bindings parse-bindings
+            _ space*
+            _ (lit-conc-seq "during")
+            _ space+
+            body parse-expression]
+           (setdynamic-exp body bindings)))
+
 (def parse-let*-exp
   (complex [_ (lit-conc-seq "let*")
             bindings parse-bindings
@@ -491,6 +503,7 @@
        parse-assign-exp
        parse-begin-exp
        parse-let-exp
+       parse-setdynamic-exp
        parse-let*-exp
        parse-unpack-exp
        parse-cond-exp

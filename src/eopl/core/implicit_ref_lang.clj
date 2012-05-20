@@ -150,6 +150,27 @@
                                                 (extend-env new-env var (newref (value-of exp env))))))
                                env
                                bindings)))
+
+    (setdynamic-exp (body bindings)
+                    (let [var-map (into {} (map
+                                            (fn [bind]
+                                              (cases binding bind
+                                                (binding-exp (var exp)
+                                                             [var (value-of exp env)])))
+                                            bindings))
+                          vars (keys var-map)
+                          old-map (into {} (map #(vector %1 (de-ref (apply-env env %1))) vars))]
+
+                      (doseq [v vars]
+                        (setref! (apply-env env v)
+                                 (get var-map v)))
+
+                      (let [result (value-of body env)]
+                        (doseq [v vars]
+                          (setref! (apply-env env v)
+                                   (get old-map v)))
+                        result)))
+
     (let*-exp (body bindings)
               (value-of body
                         (reduce (fn [new-env bind]
@@ -220,6 +241,6 @@
 (cond-feature)
 
 (assign-feature)
-
+(setdynamic-feature)
 
 (run-tests)
