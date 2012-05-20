@@ -142,3 +142,14 @@
            (times4 3)
          end")
          12)))
+
+(defeature assign-mutable
+  (is (= (result "letmutable times4 = 0
+         in begin
+           set times4 = proc (x)
+                      if zero?(x)
+                      then 0
+                      else -((times4 -(x,1)), minus(4)) ;
+           (times4 3)
+         end")
+         12)))
