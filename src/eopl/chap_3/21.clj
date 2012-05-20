@@ -14,7 +14,8 @@
   (is (= (result "let f = proc (x y) -(x, y)
                   in (f 10 5)")
          5)
-      (= (result "letproc f (x y) -(x, y)
+      )
+  (is (= (result "letproc f (x y) -(x, y)
                   in (f 10 5)")
          5)))
 

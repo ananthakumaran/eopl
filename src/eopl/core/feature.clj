@@ -49,6 +49,15 @@
                   in ((sum 3) 4)")
          7)))
 
+(defeature proc-multi
+  (is (= (result "let f = proc (x y) -(x, y)
+                  in (f 10 5)")
+         5)
+      )
+  (is (= (result "letproc f (x y) -(x, y)
+                  in (f 10 5)")
+         5)))
+
 (defeature let-proc
   (is (= (result "let x = 200
                   in letproc f (z) -(z,x)
@@ -58,6 +67,13 @@
          -100)))
 
 (defeature let
+  (is (= (result "let x = 30
+                  in let x = -(x,1)
+                         y = -(x,2)
+                     in -(x,y)")
+         1)))
+
+(defeature let-multi
   (is (= (result "let x = 30
                   in let x = -(x,1)
                          y = -(x,2)
@@ -82,6 +98,13 @@
                    in
                     (number 5 emptylist)")
          '(1 2 3 4 5))))
+
+(defeature letrec-multi
+  (is (= (result "letrec
+                    even(x) = if zero?(x) then true else (odd -(x,1))
+                    odd(x) = if zero?(x) then false else (even -(x,1))
+                  in (odd 13)")
+         true)))
 
 (defeature unpack
   (is (= (result "let u = 7
