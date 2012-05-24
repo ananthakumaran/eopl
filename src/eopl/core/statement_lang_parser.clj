@@ -112,6 +112,9 @@
   (while-stmt
    (predicate expression?)
    (body statement?))
+  (do-while-stmt
+   (predicate expression?)
+   (body statement?))
   (block-stmt
    (vars #(every? identifier? %1))
    (body statement?))
@@ -582,6 +585,14 @@
             body parse-statement]
            (while-stmt predicate body)))
 
+(def parse-do-while-stmt
+  (complex [_ (lit-conc-seq "do-while")
+            _ space+
+            predicate parse-expression
+            _ space+
+            body parse-statement]
+           (do-while-stmt predicate body)))
+
 (def-parse-delimited parse-vars (lit \,) parse-identifier)
 
 (def parse-block-stmt
@@ -610,6 +621,7 @@
        parse-multi-stmt
        parse-if-stmt
        parse-while-stmt
+       parse-do-while-stmt
        parse-block-stmt))
 
 (def parse-program

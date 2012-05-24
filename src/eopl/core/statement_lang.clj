@@ -241,6 +241,12 @@
                 (while (expval->bool (value-of predicate env))
                   (execute body env)))
 
+    (do-while-stmt (predicate body)
+                   (do
+                     (execute body env)
+                     (while (expval->bool (value-of predicate env))
+                       (execute body env))))
+
     (block-stmt (vars body)
                 (let [new-env (reduce
                                (fn [env var]
@@ -282,6 +288,18 @@
     print z
 }"))
          "12"))
+
+    (is (= (with-out-str
+           (result "var x,y,z; {
+    x = 0;
+    z = 0;
+    y = 4;
+    do-while not(zero?(x))
+    { z = +(z,y) };
+    print z
+}"))
+           "4"))
+
   (is (= (with-out-str
            (result "var f,x; {f = proc(x y) *(x,y);
                               x = 3;
