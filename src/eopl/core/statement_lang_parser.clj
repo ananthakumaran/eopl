@@ -103,6 +103,8 @@
    (exp expression?))
   (print-stmt
    (exp expression?))
+  (read-stmt
+   (var identifier?))
   (if-stmt
    (predicate expression?)
    (then statement?)
@@ -556,6 +558,12 @@
             exp parse-expression]
            (print-stmt exp)))
 
+(def parse-read-stmt
+  (complex [_ (lit-conc-seq "read")
+            _ space+
+            var parse-identifier]
+           (read-stmt var)))
+
 (def parse-if-stmt
   (complex [_ (lit-conc-seq "if")
             _ space+
@@ -598,6 +606,7 @@
 (def parse-statement
   (alt parse-assign-stmt
        parse-print-stmt
+       parse-read-stmt
        parse-multi-stmt
        parse-if-stmt
        parse-while-stmt

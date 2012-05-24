@@ -6,7 +6,8 @@
   (:use eopl.core.vector-ref)
   (:use clojure.set)
   (:use clojure.test)
-  (:use eopl.core.feature))
+  (:use eopl.core.feature)
+  (:import (java.io BufferedReader ByteArrayInputStream  InputStream InputStreamReader)))
 
 (defn expval->num [val]
   (cases expval val
@@ -227,6 +228,10 @@
     (print-stmt (exp)
                 (do (print (expval->val (value-of exp env)))))
 
+    (read-stmt (var)
+               (setref! (apply-env env var)
+                        (num-val (Integer/parseInt (read-line)))))
+
     (if-stmt (predicate then else)
              (if (expval->bool (value-of predicate env))
                (execute then env)
@@ -281,6 +286,11 @@
            (result "var f,x; {f = proc(x y) *(x,y);
                               x = 3;
                               print (f 4 x)}"))
-         "12")))
+         "12"))
+
+  (is (= (with-out-str
+           (binding [*in* (BufferedReader. (InputStreamReader. (ByteArrayInputStream. (.getBytes "10\n"))))]
+             (result "var x; { read x; print x }")))
+         "10")))
 
 (run-tests)
