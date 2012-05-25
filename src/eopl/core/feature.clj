@@ -160,3 +160,51 @@
                      in -(setdynamic x = 17 during (p 22),
                           (p 13))")
          3)))
+
+
+(defeature statement
+  (is (= (with-out-str
+           (result "var x,y; {x = 3; y = 4; print +(x,y)}"))
+         "7"))
+  (is (= (with-out-str
+           (result "var x,y,z; {
+    x = 3;
+    y = 4;
+    z = 0;
+    while not(zero?(x))
+    { z = +(z,y); x = -(x,1) };
+    print z
+}"))
+         "12"))
+
+  (is (= (with-out-str
+           (result "var x,y,z; {
+    x = 0;
+    z = 0;
+    y = 4;
+    do-while not(zero?(x))
+    { z = +(z,y) };
+    print z
+}"))
+         "4"))
+
+  (is (= (with-out-str
+           (result "var f,x; {f = proc(x y) *(x,y);
+                              x = 3;
+                              print (f 4 x)}"))
+         "12"))
+
+  (is (= (with-out-str
+           (binding [*in* (BufferedReader. (InputStreamReader. (ByteArrayInputStream. (.getBytes "10\n"))))]
+             (result "var x; { read x; print x }")))
+         "10")))
+
+
+(defeature mutpair
+  (is (= (result "let glo = pair(11,22)
+         in let f = proc (loc)
+                     let d1 = setright(loc, left(loc))
+                     in let d2 = setleft(glo, 99)
+                        in -(left(loc),right(loc))
+            in (f glo)")
+         88)))

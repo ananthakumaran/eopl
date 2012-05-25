@@ -1,9 +1,10 @@
-(ns eopl.core.statement-lang
+(ns eopl.core.mutable-pair-lang
   (:use eopl.core.define-datatype)
   (:use eopl.core.env)
-  (:use eopl.core.statement-lang-parser)
+  (:use eopl.core.mutable-pair-lang-parser)
   ;;  (:use eopl.core.link-ref)
   (:use eopl.core.vector-ref)
+  (:use eopl.core.mutpair)
   (:use clojure.set)
   (:use clojure.test)
   (:use eopl.core.feature)
@@ -29,13 +30,19 @@
     (proc-val (proc) proc)
     (else (throw (Exception. (str "invalid proc " val))))))
 
+(defn expval->mutpair [val]
+  (cases expval val
+    (mutpair-val (mutpair) mutpair)
+    (else (throw (Exception. (str "invalid proc " val))))))
 
 (defn expval->val [val]
   (cases expval val
     (num-val (num) num)
     (bool-val (bool) bool)
     (list-val (lst)
-              (map #(expval->val %1) lst))))
+              (map #(expval->val %1) lst))
+    (mutpair-val (mutpair)
+                 [(expval->val (left mutpair)) (expval->val (right mutpair))])))
 
 (declare value-of)
 
@@ -217,62 +224,46 @@
                                                  (value-of consequence env)))))
                                conditions))
                   (throw (Exception. (str "unhandled condition " conditions)))))
+
+    (newpair-exp (left right)
+                 (mutpair-val (make-pair (value-of left env) (value-of right env))))
+
+    (left-exp (exp)
+              (left (expval->mutpair (value-of exp env))))
+
+    (right-exp (exp)
+               (right (expval->mutpair (value-of exp env))))
+
+    (setleft-exp (mut exp)
+             (do
+               (set-left (expval->mutpair (value-of mut env))
+                         (value-of exp env))
+               (num-val 82)))
+
+    (setright-exp (mut exp)
+             (do
+               (set-right (expval->mutpair (value-of mut env))
+                         (value-of exp env))
+               (num-val 82)))
+
     (else (throw (Exception. (str "unkonwn exp " exp))))))
 
-(defn execute [stmt env]
-  (cases statement stmt
-    (assign-stmt (var exp)
-                 (do
-                   (setref! (apply-env env var)
-                            (value-of exp env))))
-    (print-stmt (exp)
-                (do (print (expval->val (value-of exp env)))))
-
-    (read-stmt (var)
-               (setref! (apply-env env var)
-                        (num-val (Integer/parseInt (read-line)))))
-
-    (if-stmt (predicate then else)
-             (if (expval->bool (value-of predicate env))
-               (execute then env)
-               (execute else env)))
-
-    (while-stmt (predicate body)
-                (while (expval->bool (value-of predicate env))
-                  (execute body env)))
-
-    (do-while-stmt (predicate body)
-                   (do
-                     (execute body env)
-                     (while (expval->bool (value-of predicate env))
-                       (execute body env))))
-
-    (block-stmt (vars body)
-                (let [new-env (reduce
-                               (fn [env var]
-                                 (extend-env env var (newref (num-val 0))))
-                               env
-                               vars)]
-                  (execute body new-env)))
-
-    (multi-stmt (stmts)
-                (doseq [stmt stmts]
-                  (execute stmt env)))
-    (else (throw (Exception. (str "unkonwn statement " stmt))))))
 
 (defn value-of-program [pgm]
   (cases program pgm
-    (a-program (stmt)
-               (execute stmt (empty-env)))))
+    (a-program (exp1)
+               (value-of exp1 (empty-env)))))
 
 
 (defn run [program]
   (initialize-store!)
   (value-of-program (parse program)))
 
-(defn result [program]
-  (run program))
 
-(statement-feature)
+(defn result [program]
+  (expval->val (run program)))
+
+(mutpair-feature)
+
 
 (run-tests)
