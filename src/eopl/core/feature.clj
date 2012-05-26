@@ -208,3 +208,17 @@
                         in -(left(loc),right(loc))
             in (f glo)")
          88)))
+
+(defeature array
+  (is (= (result "let a = newarray(2,minus(99))
+             p = proc (x)
+                   let v = arrayref(x,1)
+                   in arrayset(x,1,-(v,minus(1)))
+         in begin arrayset(a,1,0); (p a); (p a); arrayref(a,1) end")
+         2))
+  (is (thrown-with-msg? Exception #"indexoutofbounds"
+      (result "let a = newarray(2,minus(99))
+             in arrayref(a,2)")))
+  (is (= (result "let a = newarray(2,minus(99))
+             in arraylength(a)")
+         2)))

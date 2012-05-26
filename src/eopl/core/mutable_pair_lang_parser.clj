@@ -3,7 +3,8 @@
   (:use eopl.core.env)
   (:use name.choi.joshua.fnparse)
   (:use eopl.core.link-ref)
-  (:use eopl.core.mutpair))
+  (:use eopl.core.mutpair)
+  (:use eopl.core.array))
 
 (def identifier? (partial re-matches #"([a-zA-Z_][a-zA-Z0-9_?]*)|[*+/-]"))
 
@@ -109,7 +110,19 @@
    (newleft expression?))
   (setright-exp
    (exp expression?)
-   (newright expression?)))
+   (newright expression?))
+  (newarray-exp
+   (size expression?)
+   (val expression?))
+  (arrayset-exp
+   (array expression?)
+   (index expression?)
+   (value expression?))
+  (arrayref-exp
+   (array expression?)
+   (index expression?))
+  (arraylength-exp
+   (array expression?)))
 
 
 
@@ -152,7 +165,9 @@
   (proc-val
    (proc proc?))
   (mutpair-val
-   (mutpair mutpair?)))
+   (mutpair mutpair?))
+  (array-val
+   (array array?)))
 
 (def space* (rep* (lit-alt-seq " \n\t")))
 (def space+ (rep+ (lit-alt-seq " \n\t")))
@@ -220,36 +235,41 @@
             args parse-args]
            (apply list-exp args)))
 
-(defmacro def-parse-1-arg [name op]
+
+(defn- times [n f]
+  (map (fn [x] (f)) (range n)))
+
+(defmacro def-parse-n-arg [n name op]
   `(do
      (primitive '~name ~op)
      (def ~(symbol (str "parse-" name "-exp"))
-       (complex [_# (lit-conc-seq ~op)
-                 _# space*
-                 _# (lit \()
-                 _# space*
-                 exp1# parse-expression
-                 _# space*
-                 _# (lit \))]
-                (~(symbol (str name "-exp")) exp1#)))))
+       ~(let [exps (times n gensym)]
+          `(complex [_# (lit-conc-seq ~op)
+                     _# space*
+                     _# (lit \()
+                     ~@(mapcat (fn [exp]
+                                 `(_# space*
+                                   ~exp parse-expression
+                                   _# space*
+                                   _# (lit \,)))
+                               (take (dec n) exps))
+                     _# space*
+                     ~(last exps) parse-expression
+                     _# space*
+                     _# (lit \))]
+                    (~(symbol (str name "-exp")) ~@exps))))))
+
+(defmacro def-parse-1-arg [name op]
+  `(def-parse-n-arg 1 ~name ~op))
 
 (defmacro def-parse-2-arg [name op]
-  `(do
-     (primitive '~name ~op)
-     (def ~(symbol (str "parse-" name "-exp"))
-       (complex [_# (lit-conc-seq ~op)
-                 _# space*
-                 _# (lit \()
-                 _# space*
-                 exp1# parse-expression
-                 _# space*
-                 _# (lit \,)
-                 _# space*
-                 exp2# parse-expression
-                 _# space*
-                 _# (lit \))]
-                (~(symbol (str name "-exp")) exp1# exp2#)))))
+  `(def-parse-n-arg 2 ~name ~op))
 
+(defmacro def-parse-3-arg [name op]
+  `(def-parse-n-arg 3 ~name ~op))
+
+
+(def-parse-3-arg arrayset "arrayset")
 
 (def-parse-2-arg diff "-")
 (def-parse-2-arg add "+")
@@ -262,6 +282,8 @@
 (def-parse-2-arg newpair "pair")
 (def-parse-2-arg setleft "setleft")
 (def-parse-2-arg setright "setright")
+(def-parse-2-arg newarray "newarray")
+(def-parse-2-arg arrayref "arrayref")
 
 (def-parse-1-arg minus "minus")
 (def-parse-1-arg zero? "zero?")
@@ -272,6 +294,7 @@
 (def-parse-1-arg not "not")
 (def-parse-1-arg left "left")
 (def-parse-1-arg right "right")
+(def-parse-1-arg arraylength "arraylength")
 
 (def parse-if-exp
   (complex [_ (lit-conc-seq "if")
@@ -525,6 +548,10 @@
        parse-right-exp
        parse-setleft-exp
        parse-setright-exp
+       parse-newarray-exp
+       parse-arrayset-exp
+       parse-arrayref-exp
+       parse-arraylength-exp
        parse-equal?-exp
        parse-greater?-exp
        parse-less?-exp
@@ -556,12 +583,4 @@
 
 (defn parse [stream]
   (rule-match parse-program  prn prn {:remainder stream}))
-
-
-(parse "let glo = pair(11,22)
-in let f = proc (loc)
-let d1 = setright(loc, left(loc)) in let d2 = setleft(glo, 99)
-in -(left(loc),right(loc))
-in (f glo)")
-
 

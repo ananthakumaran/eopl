@@ -5,6 +5,7 @@
   ;;  (:use eopl.core.link-ref)
   (:use eopl.core.vector-ref)
   (:use eopl.core.mutpair)
+  (:use eopl.core.array)
   (:use clojure.set)
   (:use clojure.test)
   (:use eopl.core.feature)
@@ -33,7 +34,12 @@
 (defn expval->mutpair [val]
   (cases expval val
     (mutpair-val (mutpair) mutpair)
-    (else (throw (Exception. (str "invalid proc " val))))))
+    (else (throw (Exception. (str "invalid mutpair " val))))))
+
+(defn expval->array [val]
+  (cases expval val
+    (array-val (array) array)
+    (else (throw (Exception. (str "invalid array " val))))))
 
 (defn expval->val [val]
   (cases expval val
@@ -246,6 +252,23 @@
                          (value-of exp env))
                (num-val 82)))
 
+    (newarray-exp (size exp)
+                  (array-val (newarray (expval->num (value-of size env))
+                                       (value-of exp env))))
+
+    (arrayset-exp (array index exp)
+              (do (arrayset (expval->array (value-of array env))
+                            (expval->num (value-of index env))
+                            (value-of exp env))
+                  (num-val 42)))
+
+    (arrayref-exp (array index)
+              (arrayref (expval->array (value-of array env))
+                        (expval->num (value-of index env))))
+
+    (arraylength-exp (array)
+                     (num-val (arraylength (expval->array (value-of array env)))))
+
     (else (throw (Exception. (str "unkonwn exp " exp))))))
 
 
@@ -264,6 +287,6 @@
   (expval->val (run program)))
 
 (mutpair-feature)
-
+(array-feature)
 
 (run-tests)
