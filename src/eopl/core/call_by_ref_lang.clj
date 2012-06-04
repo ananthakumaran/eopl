@@ -1,7 +1,7 @@
 (ns eopl.core.call-by-ref-lang
   (:use eopl.core.define-datatype)
   (:use eopl.core.env)
-  (:use eopl.core.implicit-ref-lang-parser)
+  (:use eopl.core.call-by-ref-lang-parser)
   (:use eopl.core.vector-ref)
   (:use clojure.set)
   (:use clojure.test)
@@ -155,6 +155,15 @@
                                env
                                bindings)))
 
+    (letref-exp (body bindings)
+             (value-of body
+                       (reduce (fn [new-env bind]
+                                 (cases binding bind
+                                   (binding-exp (var exp)
+                                                (extend-env new-env var (value-of-operand exp env)))))
+                               env
+                               bindings)))
+
     (setdynamic-exp (body bindings)
                     (let [var-map (into {} (map
                                             (fn [bind]
@@ -261,6 +270,13 @@
                            (swap a b);
                            -(a,b)
                            end")
-         11)))
+         11))
+  (is (= (result "let a = 5
+                   in letref b = a
+                      in begin
+                         set b = 10;
+                         a
+                      end")
+         10)))
 
 (run-tests)
