@@ -222,3 +222,18 @@
   (is (= (result "let a = newarray(2,minus(99))
              in arraylength(a)")
          2)))
+
+(defeature ref
+  (is (= (result "let a = 3
+             b = 4
+             swap = proc (x y)
+                    let temp = x
+                      in begin
+                         set x = y;
+                         set y = temp
+                      end
+          in begin
+             (swap ref a ref b);
+            -(a,b)
+          end")
+         1)))

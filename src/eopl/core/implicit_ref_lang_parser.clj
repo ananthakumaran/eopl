@@ -93,7 +93,9 @@
    (exps #(every? expression? %1)))
   (assign-exp
    (var identifier?)
-   (exp expression?)))
+   (exp expression?))
+  (ref-exp
+   (var identifier?)))
 
 (define-datatype binding binding?
   (binding-exp
@@ -480,6 +482,12 @@
             exp parse-expression]
            (assign-exp var exp)))
 
+(def parse-ref-exp
+  (complex [_ (lit-conc-seq "ref")
+            _ space+
+            var parse-identifier]
+           (ref-exp var)))
+
 (def parse-expression
   (alt parse-emptylist-exp
        parse-const-exp
@@ -512,6 +520,7 @@
        parse-letrec-exp
        parse-proc-exp
        parse-call-exp
+       parse-ref-exp
        parse-var-exp))
 
 (def parse-program

@@ -43,7 +43,7 @@
     (procedure (vars body saved-env)
                (let [new-env (reduce
                               (fn [new-env [var arg]]
-                                (extend-env new-env var (newref arg)))
+                                (extend-env new-env var arg))
                               saved-env
                               (map (fn [x y] [x y]) vars args))]
                  (value-of body new-env)))))
@@ -57,6 +57,12 @@
   (bool-val
    (apply op (map #(expval->num (value-of %1 env))
                   exps))))
+
+
+(defn value-of-operand [exp env]
+  (cases expression exp
+    (ref-exp (var) (apply-env env var))
+    (else (newref (value-of exp env)))))
 
 (defn value-of [exp env]
   (cases expression exp
@@ -128,12 +134,14 @@
                  (let [new-env (extend-env env name (newref (proc-val (procedure vars proc-body env))))]
                    (value-of body new-env)))
 
+
     (call-exp (rator rands)
               (let [proc (expval->proc (value-of rator env))
                     args (map
-                          #(value-of %1 env)
+                          #(value-of-operand %1 env)
                           rands)]
                 (apply-procedure proc args)))
+
     (var-exp (var) (de-ref (apply-env env var)))
 
     (assign-exp (var exp)
@@ -242,5 +250,8 @@
 
 (assign-feature)
 (setdynamic-feature)
+
+
+(ref-feature)
 
 (run-tests)
