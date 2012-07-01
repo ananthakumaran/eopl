@@ -6,6 +6,12 @@
      (eval '(deftest ~(symbol (str name "-test"))
               ~@body))))
 
+(defeature constant
+  (is (= (result "4") 4)))
+
+(defeature diff
+  (is (= (result "-(4, -(5, 4))") 3)))
+
 (defeature list
   (is (= (result "let x = 4
                   in cons(x,
@@ -38,7 +44,9 @@
   (is (= (result "*(2,2)")
          4))
   (is (= (result "/(10,5)")
-         2)))
+         2))
+  (is (= (result "minus(5)")
+         -5)))
 
 (defeature if
   (is (= (result "if zero? (0) then 1 else 2")
@@ -98,6 +106,11 @@
                    in
                     (number 5 emptylist)")
          '(1 2 3 4 5))))
+
+(defeature letrec-factorial
+  (is (= (result "letrec factorial(x) = if less?(x,2) then 1 else (+ x (factorial -(x,1)))
+                 in (factorial 5)")
+         15)))
 
 (defeature letrec-multi
   (is (= (result "letrec
