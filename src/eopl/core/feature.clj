@@ -28,7 +28,9 @@
   (is (= (result "null?(emptylist)")
          true))
   (is (= (result "cdr(cons(4,cons(4,emptylist)))")
-         '(4))))
+         '(4)))
+  (is (= (result "list(1,2,-(4,1))")
+         '(1 2 3))))
 
 (defeature implicit-ref
   (is (= (result "let x = newref(newref(0))

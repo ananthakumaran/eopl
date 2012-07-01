@@ -159,8 +159,10 @@
          (true-exp () (apply-cont cont (bool-val true)))
          (false-exp () (apply-cont cont (bool-val false)))
 
-         ;; (list-exp (args)
-         ;;           (list-val (map #(value-of-k %1 env cont) args)))
+         (list-exp (args)
+                   (build-cont env args
+                               #(apply-cont cont
+                                           (list-val (seq %)))))
 
 
          (if-exp (exp1 exp2 exp3)
@@ -236,5 +238,6 @@
 (let-multi-feature)
 (let*-feature)
 (letrec-feature)
+(list-feature)
 
 (run-tests)
