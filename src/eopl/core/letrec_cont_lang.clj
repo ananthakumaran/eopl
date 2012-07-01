@@ -1,7 +1,8 @@
 (ns eopl.core.letrec-cont-lang
   (:use eopl.core.define-datatype)
   (:use eopl.core.env)
-  (:use eopl.core.letrec-lang-parser)
+  (:use eopl.core.implicit-ref-lang-parser)
+  (:use eopl.core.vector-ref)
   (:use clojure.set)
   (:use clojure.test)
   (:use eopl.core.feature))
@@ -60,7 +61,7 @@
       (binding-exp (var exp)
                    (value-of-k exp env
                                #(let-cont env
-                                          (extend-env new-env var %)
+                                          (extend-env new-env var (newref %))
                                           (rest bindings)
                                           cb))))))
 
@@ -70,7 +71,7 @@
     (cases binding (first bindings)
       (binding-exp (var exp)
                    (value-of-k exp env
-                               #(let*-cont (extend-env env var %)
+                               #(let*-cont (extend-env env var (newref %))
                                           (rest bindings)
                                           cb))))))
 (defn apply-procedure [p args cont]
@@ -78,7 +79,7 @@
     (procedure (vars body saved-env)
                (let [new-env (reduce
                               (fn [new-env [var arg]]
-                                (extend-env new-env var arg))
+                                (extend-env new-env var (newref arg)))
                               saved-env
                               (map (fn [x y] [x y]) vars args))]
                  (value-of-k body new-env cont)))))
@@ -176,7 +177,7 @@
                    (apply-cont cont (proc-val (procedure vars body env))))
 
          (letproc-exp (name vars proc-body body)
-                      (let [new-env (extend-env env name (proc-val (procedure vars proc-body env)))]
+                      (let [new-env (extend-env env name (newref (proc-val (procedure vars proc-body env))))]
                         (value-of-k body new-env cont)))
 
          (call-exp (rator rands)
@@ -187,7 +188,21 @@
                                                (fn [args]
                                                  (apply-procedure proc args cont)))))))
 
-         (var-exp (var) (apply-cont cont (apply-env env var)))
+
+         (var-exp (var) (apply-cont cont (de-ref (apply-env env var))))
+
+         (assign-exp (var exp)
+                     (value-of-k exp env
+                                 (fn [val]
+                                   (do
+                                     (setref! (apply-env env var)
+                                              val)
+                                     (apply-cont cont (num-val 27))))))
+
+         (begin-exp (exps)
+                    (build-cont env exps
+                                #(apply-cont cont (last %))))
+
 
          (let-exp (body bindings)
                   (let-cont env env bindings
@@ -209,7 +224,7 @@
                                 env
                                 (fn [name new-env]
                                   (let [[name vars body] (get pbs name)]
-                                    (proc-val (procedure vars body new-env))))
+                                    (newref (proc-val (procedure vars body new-env)))))
                                 (keys pbs))
                                cont)))
 
@@ -239,5 +254,7 @@
 (let*-feature)
 (letrec-feature)
 (list-feature)
+
+(assign-feature)
 
 (run-tests)
