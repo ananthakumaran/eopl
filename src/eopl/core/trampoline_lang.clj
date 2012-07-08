@@ -75,15 +75,21 @@
                                           (rest bindings)
                                           cb))))))
 
+(defn trampoline [bounce]
+  (if (expval? bounce)
+    bounce
+    (trampoline (bounce))))
+
 (defn apply-procedure [p args cont]
-  (cases proc p
-    (procedure (vars body saved-env)
-               (let [new-env (reduce
-                              (fn [new-env [var arg]]
-                                (extend-env new-env var (newref arg)))
-                              saved-env
-                              (map (fn [x y] [x y]) vars args))]
-                 (value-of-k body new-env cont)))))
+  (fn []
+    (cases proc p
+      (procedure (vars body saved-env)
+                 (let [new-env (reduce
+                                (fn [new-env [var arg]]
+                                  (extend-env new-env var (newref arg)))
+                                saved-env
+                                (map (fn [x y] [x y]) vars args))]
+                   (value-of-k body new-env cont))))))
 
 
 (defn num-val-of-exp [op env cont & exps]
@@ -234,7 +240,8 @@
 (defn value-of-program [pgm]
   (cases program pgm
          (a-program (exp1)
-                    (value-of-k exp1 (empty-env) (end-cont)))))
+                    (trampoline
+                     (value-of-k exp1 (empty-env) (end-cont))))))
 
 
 (defn run [program]
