@@ -140,7 +140,9 @@
   (list-val
    (list seq?))
   (proc-val
-   (proc proc?)))
+   (proc proc?))
+  (string-val
+   (string string?)))
 
 (def space* (rep* (lit-alt-seq " \n\t")))
 (def space+ (rep+ (lit-alt-seq " \n\t")))

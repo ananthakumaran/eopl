@@ -32,7 +32,8 @@
          (num-val (num) num)
          (bool-val (bool) bool)
          (list-val (lst)
-                   (map #(expval->val %1) lst))))
+                   (map #(expval->val %1) lst))
+         (string-val (string) string)))
 
 (declare value-of-k)
 
@@ -85,12 +86,14 @@
 (defn apply-procedure [p args econt cont]
   (cases proc p
     (procedure (vars body saved-env)
-               (let [new-env (reduce
-                              (fn [new-env [var arg]]
-                                (extend-env new-env var (newref arg)))
-                              saved-env
-                              (map (fn [x y] [x y]) vars args))]
-                 (value-of-k body new-env econt cont)))))
+               (if (= (count args) (count vars))
+                 (let [new-env (reduce
+                                (fn [new-env [var arg]]
+                                  (extend-env new-env var (newref arg)))
+                                saved-env
+                                (map (fn [x y] [x y]) vars args))]
+                   (value-of-k body new-env econt cont))
+                 (apply-cont econt (string-val (format "Wrong number of arguments expected %s actual %s" (count vars) (count args))))))))
 
 
 (defn num-val-of-exp [op env econt cont & exps]
