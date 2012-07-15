@@ -252,3 +252,15 @@
             -(a,b)
           end")
          1)))
+
+(defeature exception
+  (is (= (with-out-str
+           (result "raise 0"))
+         "unhandled exception 0"))
+  (is (= (with-out-str
+           (result "try raise 0 catch(x) raise x"))
+         "unhandled exception 0"))
+  (is (= (result "try raise 0 catch(x) 0") 0))
+  (is (= (result "try 0 catch(x) raise 9") 0))
+  (is (= (result "try try raise 0 catch(x) raise x catch(x) x") 0)))
+

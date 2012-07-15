@@ -95,7 +95,13 @@
    (var identifier?)
    (exp expression?))
   (ref-exp
-   (var identifier?)))
+   (var identifier?))
+  (try-exp
+   (exp expression?)
+   (var identifier?)
+   (handler expression?))
+  (raise-exp
+   (exp expression?)))
 
 (define-datatype binding binding?
   (binding-exp
@@ -488,6 +494,28 @@
             var parse-identifier]
            (ref-exp var)))
 
+(def parse-try-exp
+  (complex [_ (lit-conc-seq "try")
+            _ space+
+            exp parse-expression
+            _ space*
+            _ (lit-conc-seq "catch")
+            _ space*
+            _ (lit \()
+            _ space*
+            var parse-identifier
+            _ space*
+            _ (lit \))
+            _ space*
+            handler parse-expression]
+           (try-exp exp var handler)))
+
+(def parse-raise-exp
+  (complex [_ (lit-conc-seq "raise")
+            _ space+
+            exp parse-expression]
+           (raise-exp exp)))
+
 (def parse-expression
   (alt parse-emptylist-exp
        parse-const-exp
@@ -516,6 +544,8 @@
        parse-unpack-exp
        parse-cond-exp
        parse-print-exp
+       parse-try-exp
+       parse-raise-exp
        parse-letproc-exp
        parse-letrec-exp
        parse-proc-exp
