@@ -99,6 +99,7 @@
   (spawn-exp
    (exp expression?))
   (mutex-exp)
+  (yield-exp)
   (signal-exp
    (exp expression?))
   (wait-exp
@@ -385,6 +386,7 @@
 (defkeyword "true")
 (defkeyword "false")
 (defkeyword "mutex")
+(defkeyword "yield")
 
 (defn parse-charset [seq]
   (lit-alt-seq (mapcat (fn [[lower higher]]
@@ -528,6 +530,7 @@
        parse-true-exp
        parse-false-exp
        parse-mutex-exp
+       parse-yield-exp
        parse-list-exp
        parse-if-exp
        parse-assign-exp

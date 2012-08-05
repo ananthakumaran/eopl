@@ -283,5 +283,28 @@
                spawn((incr_x 400));
                spawn((incr_x 500))
                end"))
-         "1\n2\n3\n4\n5\n")))
+         "1\n2\n3\n4\n5\n"))
+  (is (= (result "let x = 0
+         in let mut = mutex
+         in let z = proc(id)
+                    proc(dummy) print(id)
+         in let incr_x = proc (id)
+                           proc(dummy)
+                             begin
+                               print(id);
+                               print(id);
+                               print(id);
+                               yield;
+                               set x = -(x, minus(1));
+                               print(id)
+                             end
+            in begin
+               spawn((incr_x 100));
+               spawn((z 200));
+               spawn((z 300));
+               spawn((incr_x 400));
+               spawn((incr_x 500));
+               10
+               end")
+         10)))
 

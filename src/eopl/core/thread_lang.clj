@@ -219,6 +219,12 @@
                                        (apply-procedure proc (num-val 28) (fn [_] (run-next-thread)))))
                                     (apply-cont cont (num-val 73))))))
 
+         (yield-exp ()
+                    (place-on-ready-queue!
+                     (fn []
+                       (apply-cont cont (num-val 99))))
+                    (run-next-thread))
+
          (mutex-exp ()
                     (apply-cont cont (mutex-val (a-mutex
                                                  (newref false)
@@ -278,7 +284,7 @@
          (else (throw (Exception. (str "unkonwn exp " exp))))))
 
 (defn value-of-program [pgm]
-  (initialize-scheduler! 3)
+  (initialize-scheduler! 2)
   (cases program pgm
     (a-program (exp1)
                (value-of-k exp1 (empty-env) (end-main-thread-cont)))))
