@@ -95,7 +95,14 @@
    (var identifier?)
    (exp expression?))
   (ref-exp
-   (var identifier?)))
+   (var identifier?))
+  (spawn-exp
+   (exp expression?))
+  (mutex-exp)
+  (signal-exp
+   (exp expression?))
+  (wait-exp
+   (exp expression?)))
 
 (define-datatype binding binding?
   (binding-exp
@@ -113,6 +120,11 @@
    (vars #(every? identifier? %1))
    (body expression?)
    (saved-env environment?)))
+
+(define-datatype mutex mutex?
+  (a-mutex
+   (ref-to-closed? reference?)
+   (ref-to-wait-queue reference?)))
 
 (define-datatype condition condition?
   (clause-exp
@@ -134,7 +146,10 @@
   (list-val
    (list seq?))
   (proc-val
-   (proc proc?)))
+   (proc proc?))
+  (mutex-val
+   (mutex mutex?)))
+
 
 (def space* (rep* (lit-alt-seq " \n\t")))
 (def space+ (rep+ (lit-alt-seq " \n\t")))
@@ -245,6 +260,9 @@
 (def-parse-1-arg cdr "cdr")
 (def-parse-1-arg null? "null?")
 (def-parse-1-arg print "print")
+(def-parse-1-arg spawn "spawn")
+(def-parse-1-arg wait "wait")
+(def-parse-1-arg signal "signal")
 
 (def parse-if-exp
   (complex [_ (lit-conc-seq "if")
@@ -366,6 +384,7 @@
 (defkeyword "emptylist")
 (defkeyword "true")
 (defkeyword "false")
+(defkeyword "mutex")
 
 (defn parse-charset [seq]
   (lit-alt-seq (mapcat (fn [[lower higher]]
@@ -504,8 +523,11 @@
        parse-less?-exp
        parse-zero?-exp
        parse-null?-exp
+       parse-wait-exp
+       parse-signal-exp
        parse-true-exp
        parse-false-exp
+       parse-mutex-exp
        parse-list-exp
        parse-if-exp
        parse-assign-exp
@@ -516,6 +538,7 @@
        parse-unpack-exp
        parse-cond-exp
        parse-print-exp
+       parse-spawn-exp
        parse-letproc-exp
        parse-letrec-exp
        parse-proc-exp

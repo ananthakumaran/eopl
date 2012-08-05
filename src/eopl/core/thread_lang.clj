@@ -3,6 +3,7 @@
   (:use eopl.core.env)
   (:use eopl.core.thread-lang-parser)
   (:use eopl.core.vector-ref)
+  (:use eopl.core.scheduler)
   (:use clojure.set)
   (:use clojure.test)
   (:use eopl.core.feature))
@@ -27,6 +28,11 @@
          (proc-val (proc) proc)
          (else (throw (Exception. (str "invalid proc " val))))))
 
+(defn expval->mutex [val]
+  (cases expval val
+         (mutex-val (mutex) mutex)
+         (else (throw (Exception. (str "invalid mutex " val))))))
+
 (defn expval->val [val]
   (cases expval val
          (num-val (num) num)
@@ -37,13 +43,20 @@
 (declare value-of-k)
 
 (defn apply-cont [cont val]
-  (cont val))
+  (if (time-expired?)
+    (do
+      (place-on-ready-queue!
+       (fn [] (apply-cont cont val)))
+        (run-next-thread))
+    (do
+      (decrement-timer!)
+      (cont val))))
 
-(defn end-cont []
+(defn end-main-thread-cont []
   (fn [val]
     (do
-      (println "end continuation.")
-      val)))
+      (set-final-answer! val)
+      (run-next-thread))))
 
 (defn build-cont
   ([env exps cb results]
@@ -191,6 +204,40 @@
 
          (var-exp (var) (apply-cont cont (de-ref (apply-env env var))))
 
+         (print-exp (exp)
+                    (value-of-k exp env
+                                (fn [val]
+                                  (println (expval->val val))
+                                  (apply-cont cont (num-val 5)))))
+
+         (spawn-exp (exp)
+                    (value-of-k exp env
+                                (fn [val]
+                                  (let [proc (expval->proc val)]
+                                    (place-on-ready-queue!
+                                     (fn []
+                                       (apply-procedure proc (num-val 28) (fn [_] (run-next-thread)))))
+                                    (apply-cont cont (num-val 73))))))
+
+         (mutex-exp ()
+                    (apply-cont cont (mutex-val (a-mutex
+                                                 (newref false)
+                                                 (newref '())))))
+
+         (wait-exp (exp)
+                   (value-of-k exp env
+                               (fn [val]
+                                 (wait-for-mutex
+                                  (expval->mutex val)
+                                  (fn [] (apply-cont cont (num-val 52)))))))
+
+         (signal-exp (exp)
+                     (value-of-k exp env
+                                 (fn [val]
+                                   (signal-mutex
+                                    (expval->mutex val)
+                                    (fn [] (apply-cont cont (num-val 52)))))))
+
          (assign-exp (var exp)
                      (value-of-k exp env
                                  (fn [val]
@@ -231,9 +278,10 @@
          (else (throw (Exception. (str "unkonwn exp " exp))))))
 
 (defn value-of-program [pgm]
+  (initialize-scheduler! 3)
   (cases program pgm
-         (a-program (exp1)
-                    (value-of-k exp1 (empty-env) (end-cont)))))
+    (a-program (exp1)
+               (value-of-k exp1 (empty-env) (end-main-thread-cont)))))
 
 
 (defn run [program]
@@ -256,5 +304,6 @@
 (list-feature)
 
 (assign-feature)
+(lock-feature)
 
 (run-tests)

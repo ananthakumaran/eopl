@@ -264,3 +264,24 @@
   (is (= (result "try 0 catch(x) raise 9") 0))
   (is (= (result "try try raise 0 catch(x) raise x catch(x) x") 0)))
 
+(defeature lock
+  (is (= (with-out-str
+           (result "let x = 0
+         in let mut = mutex
+         in let incr_x = proc (id)
+                           proc(dummy)
+                             begin
+                               wait(mut);
+                               set x = -(x, minus(1));
+                               signal(mut);
+                               print(x)
+                             end
+            in begin
+               spawn((incr_x 100));
+               spawn((incr_x 200));
+               spawn((incr_x 300));
+               spawn((incr_x 400));
+               spawn((incr_x 500))
+               end"))
+         "1\n2\n3\n4\n5\n")))
+
