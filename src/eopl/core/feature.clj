@@ -308,3 +308,20 @@
                end")
          10)))
 
+
+(defeature type
+  (is (= (type "1") :int))
+  (is (= (type "true") :bool))
+  (is (= (type "-(0, 0)") :int))
+  (is (= (type "zero?(-(0, 0))") :bool))
+  (is (= (type "if zero?(0) then false else true") :bool))
+  (is (= (type "let x = 30
+                  in let x = -(x,1)
+                         y = -(x,2)
+                     in -(x,y)") :int))
+  (is (= (type "proc (x:int y:int) -(x, y)")
+         '((:int :int) :-> :int)))
+  (is (= (type "proc (x:int y:(int, bool -> bool)) y")
+         '((:int ((:int :bool) :-> :bool)) :-> ((:int :bool) :-> :bool))))
+  (is (= (type "let sub = proc (x:int y:int) -(x, y)
+        in (sub 1 0)") :int)))
