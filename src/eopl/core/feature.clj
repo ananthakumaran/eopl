@@ -328,4 +328,10 @@
   (is (= (type "letrec
          bool even(x:int) = if zero?(x) then true else (odd -(x,1))
          bool odd(x:int) = if zero?(x) then false else (even -(x,1))
-            in (odd 13)") :bool)))
+            in (odd 13)") :bool))
+  (is (= (type "unpair a b = pair(1, true) in b")
+         :bool))
+  (is (= (type "pair(1, true)")
+         '(:pairof :int :bool)))
+  (is (= (type "proc(x: pairof int * bool) unpair a b = x in b")
+         '(((:pairof :int :bool)) :-> :bool))))

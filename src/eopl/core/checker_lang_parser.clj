@@ -14,7 +14,10 @@
   (bool-type)
   (proc-type
    (args #(every? type? %1))
-   (result-type type?)))
+   (result-type type?))
+  (pairof-type
+   (a type?)
+   (b type?)))
 
 (define-datatype typed typed?
   (typed-var
@@ -79,6 +82,14 @@
   (letrec-exp
    (body expression?)
    (bindings #(every? letrec-binding? %1)))
+  (pair-exp
+   (a expression?)
+   (b expression?))
+  (unpair-exp
+   (a identifier?)
+   (b identifier?)
+   (exp expression?)
+   (body expression?))
   (call-exp
    (rator expression?)
    (rands #(every? expression? %1)))
@@ -242,6 +253,7 @@
 (def-parse-2-arg greater? "greater?")
 (def-parse-2-arg less? "less?")
 (def-parse-2-arg cons "cons")
+(def-parse-2-arg pair "pair")
 
 (def-parse-1-arg minus "minus")
 (def-parse-1-arg zero? "zero?")
@@ -314,9 +326,20 @@
             _ (lit \))]
            (proc-type args result)))
 
+(def parse-pairof-type
+  (complex [_ (lit-conc-seq "pairof")
+            _ space+
+            a parse-type
+            _ space*
+            _ (lit \*)
+            _ space*
+            b parse-type]
+           (pairof-type a b)))
+
 (def parse-type
   (alt parse-primitive-type
-       parse-proc-type))
+       parse-proc-type
+       parse-pairof-type))
 
 (def parse-typed-var
   (complex [var parse-identifier
@@ -484,6 +507,22 @@
             body parse-expression]
            (unpack-exp body vars value)))
 
+(def parse-unpair-exp
+  (complex [_ (lit-conc-seq "unpair")
+            _ space*
+            a parse-identifier
+            _ space*
+            b parse-identifier
+            _ space*
+            _ (lit \=)
+            _ space*
+            exp parse-expression
+            _ space*
+            _ (lit-conc-seq "in")
+            _ space+
+            body parse-expression]
+           (unpair-exp a b exp body)))
+
 
 (def parse-clause
   (complex [_ space*
@@ -513,6 +552,7 @@
        parse-cons-exp
        parse-car-exp
        parse-cdr-exp
+       parse-pair-exp
        parse-equal?-exp
        parse-greater?-exp
        parse-less?-exp
@@ -525,6 +565,7 @@
        parse-let-exp
        parse-let*-exp
        parse-unpack-exp
+       parse-unpair-exp
        parse-cond-exp
        parse-print-exp
        parse-letproc-exp
