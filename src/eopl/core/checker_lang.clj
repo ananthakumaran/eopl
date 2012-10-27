@@ -6,6 +6,21 @@
   (:use clojure.test))
 
 
+(defn make-proc-type [vars result-type]
+  (proc-type (map (fn [var]
+                    (cases typed var
+                      (typed-var (name type)
+                                 type)))
+                  vars)
+             result-type))
+
+(defn extend-env-with-vars [env vars]
+  (reduce (fn [nenv var]
+            (cases typed var
+              (typed-var (name type)
+                         (extend-env nenv name type))))
+          env vars))
+
 (defn type-to-external-form [t]
   (cases type t
     (int-type () :int)
@@ -50,21 +65,30 @@
                                                (extend-env nenv var (type-of exp1 tenv)))))
                               tenv
                               bindings)))
+
+    (letrec-exp (body letrec-bindings)
+                (let [penv (reduce (fn [nenv lb]
+                                     (cases letrec-binding lb
+                                       (letrec-binding-exp (return name vars body)
+                                                           (extend-env nenv name (make-proc-type vars return)))))
+                                   tenv
+                                   letrec-bindings)]
+                  (doseq [lb letrec-bindings]
+                    (cases letrec-binding lb
+                      (letrec-binding-exp (return name vars body)
+                                          (check-equal-type!
+                                           return
+                                           (type-of body
+                                                    (extend-env-with-vars penv vars))
+                                           body))))
+                  (type-of body
+                           penv)))
+
     (proc-exp (vars body)
               (let [result-type
                     (type-of body
-                             (reduce
-                              (fn [nenv var]
-                                (cases typed var
-                                  (typed-var (name type)
-                                             (extend-env nenv name type))))
-                              tenv vars))]
-                (proc-type (map (fn [var]
-                                  (cases typed var
-                                    (typed-var (name type)
-                                               type)))
-                                vars)
-                           result-type)))
+                             (extend-env-with-vars tenv vars))]
+                (make-proc-type vars result-type)))
 
     (call-exp (rator rands)
               (let [rator-type (type-of rator tenv)
@@ -90,5 +114,3 @@
 (type-feature)
 
 (run-tests)
-
-

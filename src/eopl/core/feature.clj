@@ -324,4 +324,8 @@
   (is (= (type "proc (x:int y:(int, bool -> bool)) y")
          '((:int ((:int :bool) :-> :bool)) :-> ((:int :bool) :-> :bool))))
   (is (= (type "let sub = proc (x:int y:int) -(x, y)
-        in (sub 1 0)") :int)))
+        in (sub 1 0)") :int))
+  (is (= (type "letrec
+         bool even(x:int) = if zero?(x) then true else (odd -(x,1))
+         bool odd(x:int) = if zero?(x) then false else (even -(x,1))
+            in (odd 13)") :bool)))

@@ -7,8 +7,19 @@
 
 (declare condition?)
 (declare binding?)
-(declare proc-binding?)
-(declare typed?)
+(declare letrec-binding?)
+
+(define-datatype type type?
+  (int-type)
+  (bool-type)
+  (proc-type
+   (args #(every? type? %1))
+   (result-type type?)))
+
+(define-datatype typed typed?
+  (typed-var
+   (name identifier?)
+   (type type?)))
 
 (define-datatype expression expression?
   (const-exp
@@ -67,7 +78,7 @@
    (body expression?))
   (letrec-exp
    (body expression?)
-   (bindings #(every? proc-binding? %1)))
+   (bindings #(every? letrec-binding? %1)))
   (call-exp
    (rator expression?)
    (rands #(every? expression? %1)))
@@ -92,10 +103,11 @@
    (var identifier?)
    (value expression?)))
 
-(define-datatype proc-binding proc-binding?
-  (proc-binding-exp
+(define-datatype letrec-binding letrec-binding?
+  (letrec-binding-exp
+   (return type?)
    (name identifier?)
-   (vars #(every? identifier? %1))
+   (vars #(every? typed? %1))
    (body expression?)))
 
 (define-datatype proc proc?
@@ -125,18 +137,6 @@
    (list seq?))
   (proc-val
    (proc proc?)))
-
-(define-datatype type type?
-  (int-type)
-  (bool-type)
-  (proc-type
-   (args #(every? type? %1))
-   (result-type type?)))
-
-(define-datatype typed typed?
-  (typed-var
-   (name identifier?)
-   (type type?)))
 
 (def space* (rep* (lit-alt-seq " \n\t")))
 (def space+ (rep+ (lit-alt-seq " \n\t")))
@@ -348,28 +348,30 @@
             body parse-expression]
            (proc-exp vars body)))
 
-(def parse-proc-binding
+(def parse-letrec-binding
   (complex [_ space*
+            return parse-type
+            _ space*
             name parse-identifier
             _ space*
             _ (lit \()
-            vars parse-var-list
+            vars parse-typed-var-list
             _ space*
             _ (lit \))
             _ space*
             _ (lit \=)
             _ space*
             body parse-expression]
-           (proc-binding-exp name vars body)))
+           (letrec-binding-exp return name vars body)))
 
 (def parse-letrec-exp
   (complex [_ (lit-conc-seq "letrec")
-            proc-bindings (rep+ parse-proc-binding)
+            letrec-bindings (rep+ parse-letrec-binding)
             _ space+
             _ (lit-conc-seq "in")
             _ space+
             body parse-expression]
-           (letrec-exp body proc-bindings)))
+           (letrec-exp body letrec-bindings)))
 
 (def parse-letproc-exp
   (complex [_ (lit-conc-seq "letproc")
