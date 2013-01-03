@@ -11,12 +11,16 @@
         variant-field-names (map first variant-spec)
         variant-args (mapcat #(reverse (take (if (= (second %1) '&) 2 1) %1)) variant-spec)
         variant-field-predicates (map last variant-spec)]
-    `(defn ~variant-name [~@variant-args]
-       {:pre [~@(map list variant-field-predicates variant-field-names)]}
-       {:type '~type-name
-        :variant '~variant-name
-        :values (array-map
-                 ~@(mapcat #(list (keyword %1) %1) variant-field-names))})))
+    `(do
+       (defn ~(symbol (str variant-name "?")) [data#]
+         (and (= (get data# :type) '~type-name)
+              (= (get data# :variant) '~variant-name)))
+       (defn ~variant-name [~@variant-args]
+         {:pre [~@(map list variant-field-predicates variant-field-names)]}
+         {:type '~type-name
+          :variant '~variant-name
+          :values (array-map
+                   ~@(mapcat #(list (keyword %1) %1) variant-field-names))}))))
 
 ;; (define-datatype type-name type-predicate-name
 ;;   { (variant-name { (field-name predicate ) }* ) }+)
@@ -46,3 +50,6 @@
                                     ~@consequent)
                                   (vals (:values ~variant))))))))
                        clauses)))))
+
+(defn data-value [data field-name]
+  (get (get data :values) field-name))

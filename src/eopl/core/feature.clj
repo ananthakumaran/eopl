@@ -335,3 +335,26 @@
          '(:pairof :int :bool)))
   (is (= (type "proc(x: pairof int * bool) unpair a b = x in b")
          '(((:pairof :int :bool)) :-> :bool))))
+
+(defeature inferred-type
+  (is (= (type "1") :int))
+  (is (= (type "true") :bool))
+  (is (= (type "-(0, 0)") :int))
+  (is (= (type "zero?(-(0, 0))") :bool))
+  (is (= (type "if zero?(0) then false else true") :bool))
+  (is (= (type "let x = 30
+                  in let x = -(x,1)
+                         y = -(x,2)
+                     in -(x,y)") :int))
+  (is (= (type "proc (x:? y:?) -(x, y)")
+         '((:int :int) :-> :int)))
+  (is (= (type "proc(x: ?) if zero?(x) then false else true")
+         '((:int) :-> :bool)))
+  (is (= (type "proc (x:int y:(int, bool -> bool)) y")
+         '((:int ((:int :bool) :-> :bool)) :-> ((:int :bool) :-> :bool))))
+  (is (= (type "let sub = proc (x:? y:?) -(x, y)
+        in (sub 1 0)") :int))
+  (is (= (type "letrec
+         ? even(x:?) = if zero?(x) then true else (odd -(x,1))
+         bool odd(x:?) = if zero?(x) then false else (even -(x,1))
+            in (odd 13)") :bool)))
