@@ -358,3 +358,29 @@
          ? even(x:?) = if zero?(x) then true else (odd -(x,1))
          bool odd(x:?) = if zero?(x) then false else (even -(x,1))
             in (odd 13)") :bool)))
+
+(def module-sample "module m1
+        interface
+         [a : int
+          b : int
+          c : int]
+        body
+         [a = 33
+          b = 44
+          c = 55]
+       module m2
+        interface
+         [a : int
+         b : int]
+        body
+         [a = 66
+          b = from m1 take b]  ")
+
+(defeature simple-module
+  (is (= (check-and-run (str module-sample "letrec
+         bool even(x:int) = if zero?(x) then true else (odd -(x,1))
+         bool odd(x:int) = if zero?(x) then false else (even -(x,1))
+            in (odd 13)")) true))
+  (is (= (check-and-run (str module-sample "let z = 99
+       in -(z, -(from m1 take a, from m2 take b))"))
+         110)))

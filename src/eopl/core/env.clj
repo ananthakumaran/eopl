@@ -28,10 +28,17 @@
 (defn has-binding? [env search-var]
   (boolean (env search-var)))
 
+
+(defrecord Module [name val env])
+(defrecord TModule [name interface])
+
 (defn apply-env [env search-var]
   (let [val (env search-var)]
     (if val
-      (if (atom? val) (deref val) val)
+      (cond (atom? val) (deref val)
+            (instance? Module val) (throw (Exception. "not implemented"))
+            (instance? TModule val) (throw (Exception. "not implemented"))
+            :else val)
       (throw (IllegalAccessException. (str "var " search-var " not found in env"))))))
 
 (deftest env-test
